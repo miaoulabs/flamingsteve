@@ -16,7 +16,7 @@ type Options struct {
 }
 
 type Detector struct {
-	dev  *ak9753.Device
+	dev  ak9753.Device
 	opts Options
 
 	presence [FieldCount]bool
@@ -38,7 +38,7 @@ type Detector struct {
 	mutex sync.RWMutex
 }
 
-func New(device *ak9753.Device, options *Options) *Detector {
+func New(device ak9753.Device, options *Options) *Detector {
 	if options == nil {
 		options = &Options{
 			Interval:          time.Millisecond * 30,
@@ -65,6 +65,7 @@ func New(device *ak9753.Device, options *Options) *Detector {
 }
 
 func (d *Detector) Close() {
+	println("closing detector")
 	d.close <- true
 	close(d.close)
 }
@@ -185,9 +186,8 @@ func (d *Detector) Movement() uint8 {
 }
 
 func (d *Detector) run() {
-
-	println("starting detection loop")
-	defer println("detection loop stopped")
+	println("detector loop started")
+	defer println("detector loop stopped")
 
 	tick := time.NewTicker(time.Millisecond * 5)
 	defer tick.Stop()
@@ -197,10 +197,6 @@ func (d *Detector) run() {
 		case <-d.close:
 			return
 		default:
-		}
-
-		if !d.dev.DataReady() {
-			continue
 		}
 
 		ir1, err := d.dev.IR1()
@@ -230,12 +226,6 @@ func (d *Detector) run() {
 		temp, err := d.dev.Temperature()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
-		}
-
-		err = d.dev.StartNextSample()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
-			continue
 		}
 
 		diff13 := ir1 - ir3

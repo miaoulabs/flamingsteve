@@ -7,12 +7,10 @@ import (
 	"os"
 	"os/signal"
 
-	tm "github.com/buger/goterm"
-
-	"github.com/spf13/pflag"
-
 	"flamingsteve/pkg/ak9753"
+	rm "flamingsteve/pkg/ak9753/remote"
 	"flamingsteve/pkg/presence_detector"
+	"github.com/spf13/pflag"
 	"periph.io/x/periph"
 	"periph.io/x/periph/conn/i2c/i2creg"
 	"periph.io/x/periph/host"
@@ -21,110 +19,94 @@ import (
 )
 
 var (
-	threshold = pflag.Float32P("threshold", "p", 10, "presence threshold")
-	interval  = pflag.DurationP("interval", "i", time.Millisecond * 30, "interval for IR evaluration")
+	threshold = pflag.Float32P("threshold", "t", 10, "presence threshold")
+	interval  = pflag.DurationP("interval", "i", time.Millisecond*30, "interval for IR evaluration")
 	smoothing = pflag.Float32P("smoothing", "s", 0.05, "0.3 very steep, 0.1 less steep, 0.05 less steep")
+	ui        = pflag.Bool("ui", false, "display real time informatio on the terminal")
+	publish   = pflag.BoolP("publish", "p", false, "url for publish data push")
+	remote    = pflag.Bool("remote", false, "connect to a remote sensor")
+	natsUrl   = pflag.String("nats-server", "", "publish nats server where to push the sensor data")
 )
 
 func hostInit() (*periph.State, error) {
 	return host.Init()
 }
 
+var detector *pdetect.Detector
+
 func mainImpl() error {
 
-	state, err := hostInit()
-	if err != nil {
-		return err
-	}
+	var err error
+	var device ak9753.Device
 
-	for i, drv := range state.Loaded {
-		fmt.Printf("driver #%d: %v\n", i, drv.String())
-	}
-
-	b, err := i2creg.Open("")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer b.Close()
-
-	fmt.Printf("i2c bus %s is open\n", b.String())
-
-	ak, err := ak9753.New(b, ak9753.I2C_DEFAULT_ADDRESS)
-	if err != err {
-		return err
-	}
-
-	if ak == nil {
-		return errors.New("null device")
-	}
-
-	go func() {
-		detector := pdetect.New(ak, &pdetect.Options{
-			Interval:          *interval,
-			PresenceThreshold: *threshold,
-			MovementThreshold: 10,
-			Smoothing:         *smoothing,
-		})
-		defer detector.Close()
-
-		width := 8
-		toXO := func(v bool) string {
-			if v {
-				return center("YES", width)
-			} else {
-				return center("no", width)
-			}
+	if !*remote {
+		state, err := hostInit()
+		if err != nil {
+			return err
 		}
 
-		time.Sleep(time.Millisecond * 1000)
-
-		tm.Clear()
-
-		tick := time.NewTicker(time.Millisecond * 250)
-		defer tick.Stop()
-
-		start := time.Now()
-
-		for range tick.C {
-			tm.MoveCursor(1, 1)
-
-			tm.Printf("            | %s | %s | %s | %s |\n",
-				center("IR1", width),
-				center("IR2", width),
-				center("IR3", width),
-				center("IR4", width),
-			)
-			tm.Printf("presence    | %s | %s | %s | %s |\n",
-				toXO(detector.PresentInField1()),
-				toXO(detector.PresentInField2()),
-				toXO(detector.PresentInField3()),
-				toXO(detector.PresentInField4()),
-			)
-			tm.Printf("sensor      | %8.2f | %8.2f | %8.2f | %8.2f |\n",
-				detector.IR1(),
-				detector.IR2(),
-				detector.IR3(),
-				detector.IR4(),
-			)
-			tm.Printf("derivative  | %8.2f | %8.2f | %8.2f | %8.2f |\n",
-				detector.DerivativeOfIR1(),
-				detector.DerivativeOfIR2(),
-				detector.DerivativeOfIR3(),
-				detector.DerivativeOfIR4(),
-			)
-			tm.Printf("temperature | %8.2f C\n", detector.Temperature())
-			tm.Printf("elapsed     | %v\n", time.Now().Sub(start))
-			tm.Flush()
+		for i, drv := range state.Loaded {
+			fmt.Printf("driver #%d: %v\n", i, drv.String())
 		}
-	}()
+
+		b, err := i2creg.Open("")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer b.Close()
+
+		fmt.Printf("i2c bus %s is open\n", b.String())
+
+		ak, err := ak9753.New(b, ak9753.I2C_DEFAULT_ADDRESS)
+		if err != err {
+			return err
+		}
+
+		if ak == nil {
+			return errors.New("null device")
+		}
+
+		device, err = ak9753.NewReader(ak)
+		if err != nil {
+			return err
+		}
+	} else {
+		device, err = rm.NewSuscriber(*natsUrl)
+		if err != nil {
+			return err
+		}
+	}
+
+	did, _ := device.DeviceId()
+	cid, _ := device.CompagnyCode()
+	fmt.Printf("device id: 0x%x, compagny id: 0x%x\n", did, cid)
+
+	if *publish {
+		device, err = rm.NewPublisher(device, *natsUrl)
+		if err != nil {
+			return err
+		}
+	}
+	defer device.Close()
+
+	detector = pdetect.New(device, &pdetect.Options{
+		Interval:          *interval,
+		PresenceThreshold: *threshold,
+		MovementThreshold: 10,
+		Smoothing:         *smoothing,
+	})
+	defer detector.Close()
+
+	if *ui {
+		d := display{closed: make(chan bool)}
+		go d.textDisplay()
+		defer d.close()
+	}
 
 	waitForTerm()
 
-	return err
-}
 
-func center(text string, width int) string {
-	return fmt.Sprintf("%[1]*s", -width, fmt.Sprintf("%[1]*s", (width+len(text))/2, text))
+	return err
 }
 
 func main() {
@@ -151,6 +133,4 @@ func waitForTerm() {
 	<-done
 
 	println("stopping application")
-
-	os.Exit(0)
 }
