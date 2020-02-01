@@ -12,5 +12,3 @@ const (
 
 	smoothingCount = 6
 )
-
-

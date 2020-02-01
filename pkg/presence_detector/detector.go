@@ -9,30 +9,32 @@ import (
 )
 
 type Options struct {
-	Interval time.Duration
+	Interval          time.Duration
 	PresenceThreshold float32
 	MovementThreshold float32
 }
 
 type Detector struct {
-	dev *ak9753.Device
+	dev  *ak9753.Device
 	opts Options
 
 	presence [FieldCount]bool
 	movement uint8
 
-	values  [6]float32
-	ders    [FieldCount]float32
-	ders13  float32
-	ders24  float32
+	values [6]float32
+	ders   [FieldCount]float32
+	ders13 float32
+	ders24 float32
+
+	temp float32
 
 	smoothers [smoothingCount]*smoother
 
 	lastEval time.Time
 
-	close   chan bool
+	close chan bool
 
-	mutex   sync.RWMutex
+	mutex sync.RWMutex
 }
 
 func New(device *ak9753.Device, options *Options) *Detector {
@@ -45,10 +47,9 @@ func New(device *ak9753.Device, options *Options) *Detector {
 	}
 
 	d := &Detector{
-		dev: device,
-		opts: *options,
+		dev:   device,
+		opts:  *options,
 		close: make(chan bool),
-
 	}
 
 	for i := range d.smoothers {
@@ -107,6 +108,12 @@ func (d *Detector) PresenceAnyFields(clear bool) bool {
 	}
 
 	return r
+}
+
+func (d *Detector) Temperature() float32 {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	return d.temp
 }
 
 func (d *Detector) IR1() float32 {
@@ -176,7 +183,7 @@ func (d *Detector) Movement() uint8 {
 	return r
 }
 
-func (d *Detector) run () {
+func (d *Detector) run() {
 
 	println("starting detection loop")
 	defer println("detection loop stopped")
@@ -188,7 +195,10 @@ func (d *Detector) run () {
 		fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
 	}
 
-	for {
+	tick := time.NewTicker(time.Millisecond * 5)
+	defer tick.Stop()
+
+	for range tick.C {
 		select {
 		case <-d.close:
 			return
@@ -223,6 +233,11 @@ func (d *Detector) run () {
 			continue
 		}
 
+		temp, err := d.dev.Temperature()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
+		}
+
 		err = d.dev.StartNextSample()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
@@ -237,6 +252,7 @@ func (d *Detector) run () {
 		//)
 
 		d.mutex.Lock()
+		d.temp = temp
 		d.smoothers[0].add(ir1)
 		d.smoothers[1].add(ir2)
 		d.smoothers[2].add(ir3)
@@ -252,7 +268,7 @@ func (d *Detector) run () {
 				//fmt.Printf("d#%d: %f ", i, der)
 
 				if der > d.opts.PresenceThreshold {
-          d.presence[i] = true
+					d.presence[i] = true
 				} else if der < -d.opts.PresenceThreshold {
 					d.presence[i] = false
 				}

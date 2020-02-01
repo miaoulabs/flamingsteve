@@ -7,9 +7,9 @@ type smoother struct {
 	last       float32
 }
 
-func (s* smoother) add(data float32)  {
+func (s *smoother) add(data float32) {
 	s.last = data
-	s.avg = s.avgWeigth* data + (1 - s.avgWeigth) * s.avg
+	s.avg = s.avgWeigth*data + (1-s.avgWeigth)*s.avg
 }
 
 func (s *smoother) average() float32 {
@@ -25,4 +25,3 @@ func (s *smoother) derivative() float32 {
 	s.lastMarked = s.avg
 	return d
 }
-
