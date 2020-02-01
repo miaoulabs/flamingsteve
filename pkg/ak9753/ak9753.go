@@ -120,8 +120,8 @@ func (d *Device) RawTemperature() (uint16, error) {
 
 func (d *Device) Temperature() (float32, error) {
 	raw, err := d.RawTemperature()
-	raw >>= 6 // Temp is 10-bit. TMPL0:5 fixed at 0
-	temperature := 26.75 + (float32(raw) * 0.125)
+	iraw := int16(raw) >> 6 // Temp is 10-bit. TMPL0:5 fixed at 0
+	temperature := 26.75 + (float32(iraw) * 0.125)
 	return temperature, err
 }
 
@@ -266,6 +266,5 @@ func (d *Device) sendUint16(cmd Cmd, data uint16) error {
 }
 
 func toFloat(iVal uint16) float32 {
-	//return 14286.8 * float32(iVal) / 32768.0
-	return (32767 / 2) * float32(iVal) / 32767
+	return 14286.8 * float32(int16(iVal)) / 32768.0
 }

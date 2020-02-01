@@ -12,6 +12,7 @@ type Options struct {
 	Interval          time.Duration
 	PresenceThreshold float32
 	MovementThreshold float32
+	Smoothing         float32
 }
 
 type Detector struct {
@@ -54,7 +55,7 @@ func New(device *ak9753.Device, options *Options) *Detector {
 
 	for i := range d.smoothers {
 		d.smoothers[i] = &smoother{
-			avgWeigth: 0.05, //0.3 very steep, 0.1 less steep, 0.05 less steep
+			avgWeigth: options.Smoothing, //0.3 very steep, 0.1 less steep, 0.05 less steep
 		}
 	}
 
@@ -187,13 +188,6 @@ func (d *Detector) run() {
 
 	println("starting detection loop")
 	defer println("detection loop stopped")
-
-	// first call is necessary otherwise dataready will
-	// always be false
-	err := d.dev.StartNextSample()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
-	}
 
 	tick := time.NewTicker(time.Millisecond * 5)
 	defer tick.Stop()

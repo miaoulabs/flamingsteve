@@ -9,6 +9,8 @@ import (
 
 	tm "github.com/buger/goterm"
 
+	"github.com/spf13/pflag"
+
 	"flamingsteve/pkg/ak9753"
 	"flamingsteve/pkg/presence_detector"
 	"periph.io/x/periph"
@@ -16,6 +18,12 @@ import (
 	"periph.io/x/periph/host"
 
 	"time"
+)
+
+var (
+	threshold = pflag.Float32P("threshold", "p", 10, "presence threshold")
+	interval  = pflag.DurationP("interval", "i", time.Millisecond * 30, "interval for IR evaluration")
+	smoothing = pflag.Float32P("smoothing", "s", 0.05, "0.3 very steep, 0.1 less steep, 0.05 less steep")
 )
 
 func hostInit() (*periph.State, error) {
@@ -50,17 +58,12 @@ func mainImpl() error {
 		return errors.New("null device")
 	}
 
-	tmp, err := ak.Temperature()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("temperature: %f C\n", tmp)
-
 	go func() {
 		detector := pdetect.New(ak, &pdetect.Options{
-			Interval:          time.Millisecond * 30,
-			PresenceThreshold: 6,
+			Interval:          *interval,
+			PresenceThreshold: *threshold,
 			MovementThreshold: 10,
+			Smoothing:         *smoothing,
 		})
 		defer detector.Close()
 
@@ -73,11 +76,11 @@ func mainImpl() error {
 			}
 		}
 
-		time.Sleep(time.Millisecond * 1500)
+		time.Sleep(time.Millisecond * 1000)
 
 		tm.Clear()
 
-		tick := time.NewTicker(time.Millisecond * 50)
+		tick := time.NewTicker(time.Millisecond * 250)
 		defer tick.Stop()
 
 		start := time.Now()
@@ -125,6 +128,8 @@ func center(text string, width int) string {
 }
 
 func main() {
+	pflag.Parse()
+
 	if err := mainImpl(); err != nil {
 		fmt.Fprintf(os.Stderr, "i2c-io: %s.\n", err)
 		os.Exit(1)
