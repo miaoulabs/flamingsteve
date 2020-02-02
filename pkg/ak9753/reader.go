@@ -1,6 +1,7 @@
 package ak9753
 
 import (
+	"flamingsteve/pkg/notify"
 	"fmt"
 	"os"
 	"sync"
@@ -17,6 +18,8 @@ type Reader struct {
 	mutex   sync.RWMutex
 	state   State
 	lastErr error
+
+	notify.Notifier
 }
 
 func NewReader(dev *Physical) (*Reader, error) {
@@ -41,6 +44,7 @@ func (r *Reader) Close() {
 	println("closing ak9753 reader")
 	r.close <- true
 	close(r.close)
+	r.UnsubscribeAll()
 }
 
 func (r *Reader) initDevice() error {
@@ -48,10 +52,6 @@ func (r *Reader) initDevice() error {
 	defer r.mutex.Unlock()
 
 	var err error
-	//err := r.dev.SoftReset()
-	//if err != nil {
-	//	return err
-	//}
 
 	r.state.CompagnyCode, err = r.dev.CompagnyCode()
 	if err != nil {
@@ -63,7 +63,11 @@ func (r *Reader) initDevice() error {
 		return err
 	}
 
-	r.dev.DataReadDone()
+	model, err := r.dev.Model()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("sensor model: %s\n", model)
 
 	return nil
 }
@@ -73,11 +77,6 @@ func (r *Reader) run() {
 	defer println("ak9753 reader loop stopped")
 
 	var err error
-
-	//err := r.dev.SoftReset()
-	//if err != nil {
-	//	fmt.Fprintf(os.Stderr, "error soft resetting device: %w", err)
-	//}
 
 	err = r.dev.StartNextSample()
 	if err != nil {
@@ -102,6 +101,11 @@ func (r *Reader) run() {
 
 		state := State{}
 
+		state.Temperature, err = r.dev.Temperature()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
+		}
+
 		state.Ir1, err = r.dev.IR1()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error reading sample for ir1: %w", err)
@@ -122,16 +126,6 @@ func (r *Reader) run() {
 			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
 		}
 
-		state.Temperature, err = r.dev.Temperature()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
-		}
-
-		err = r.dev.DataReadDone()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error signaling read done: %w", err)
-		}
-
 		err = r.dev.StartNextSample()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error starting next sample: %w", err)
@@ -139,8 +133,13 @@ func (r *Reader) run() {
 
 		// update state
 		r.mutex.Lock()
+		haschanged := !r.state.Equal(state)
 		r.state = state
 		r.mutex.Unlock()
+
+		if haschanged {
+			r.Notify()
+		}
 	}
 }
 

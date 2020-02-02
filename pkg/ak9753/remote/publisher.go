@@ -81,7 +81,8 @@ func (p *Publisher) run() {
 		newV := p.dev.All()
 
 		if !newV.Equal(last) {
-			err := p.encoded.Publish(Topic, p.dev.All())
+			last = newV
+			err := p.encoded.Publish(Topic, last)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error sending message: %w", err)
 			}
@@ -119,4 +120,8 @@ func (p *Publisher) Temperature() (float32, error) {
 
 func (p *Publisher) All() ak9753.State {
 	return p.dev.All()
+}
+
+func (p *Publisher) Subscribe(channel chan<- bool) {
+	p.dev.Subscribe(channel)
 }

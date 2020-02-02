@@ -2,6 +2,7 @@ package remote
 
 import (
 	"flamingsteve/pkg/ak9753"
+	"flamingsteve/pkg/notify"
 	"github.com/nats-io/nats.go"
 	"sync"
 )
@@ -13,10 +14,13 @@ type Suscriber struct {
 
 	state ak9753.State
 	mutex sync.RWMutex
+
+	notify.Notifier
 }
 
 func NewSuscriber(url string) (*Suscriber, error) {
-	s := &Suscriber{}
+	s := &Suscriber{
+	}
 
 	if url == "" {
 		url = "nats//localhost:4222"
@@ -40,8 +44,13 @@ func NewSuscriber(url string) (*Suscriber, error) {
 
 	s.subs, err = s.encoded.Subscribe(Topic, func(state *ak9753.State) {
 		s.mutex.Lock()
+		haschanged := !s.state.Equal(*state)
 		s.state = *state
 		s.mutex.Unlock()
+
+		if haschanged {
+			s.Notify()
+		}
 	})
 
 	if err != nil {
@@ -54,6 +63,7 @@ func NewSuscriber(url string) (*Suscriber, error) {
 func (s *Suscriber) Close() {
 	println("closing suscriber")
 	s.encoded.Close()
+	s.UnsubscribeAll()
 }
 
 func (s *Suscriber) DeviceId() (uint8, error) {

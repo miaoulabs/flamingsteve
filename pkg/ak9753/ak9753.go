@@ -56,19 +56,28 @@ func (d *Physical) CompagnyCode() (uint8, error) {
 	return d.readUint8(REG_WIA1)
 }
 
+func (d *Physical) Model() (string, error) {
+	model, err := d.readUint8(REG_INFO1)
+	if err != nil {
+		return "", fmt.Errorf("could not determine mode", model)
+	}
+	if model == SENSOR_VERSION_AK9750 {
+		return "ak9750", nil
+	} else if model == SENSOR_VERSION_AK9753 {
+		return "ak9753", nil
+	} else {
+		return "unknown", nil
+	}
+}
+
 func (d *Physical) DataReady() bool {
 	data, err := d.ST1()
-	return err == nil && (data&0x01) == 0x01
+	return err == nil && (data & (1 << 0)) != 0 //Bit 0 is DRDY
 }
 
 func (d *Physical) DataOverRun() bool {
 	data, err := d.ST1()
-	return err == nil && (data&0x02) == 0x02
-}
-
-func (d *Physical) DataReadDone() error {
-	_, err := d.ST2()
-	return err
+	return err == nil && (data & 1 << 1) != 0 //Bit 1 is DOR
 }
 
 func (d *Physical) ST1() (uint8, error) {
@@ -270,6 +279,7 @@ func (d *Physical) sendUint16(cmd Cmd, data uint16) error {
 	return d.dev.Tx(append(cmd.toBytes(), bytes...), nil)
 }
 
-func toFloat(iVal uint16) float32 {
-	return 14286.8 * float32(int16(iVal)) / 32768.0
+func toFloat(val uint16) float32 {
+	ival := int16(val)
+	return float32(ival)
 }

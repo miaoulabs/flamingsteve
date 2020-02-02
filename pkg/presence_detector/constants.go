@@ -2,8 +2,6 @@ package pdetect
 
 //Movement
 const (
-	FieldCount = 4
-
 	MovementNone     = uint8(0b0000)
 	MovementFrom1to3 = 0b0001
 	MovementFrom3to1 = 0b0010

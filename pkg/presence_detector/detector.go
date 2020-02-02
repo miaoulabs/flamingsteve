@@ -19,17 +19,18 @@ type Detector struct {
 	dev  ak9753.Device
 	opts Options
 
-	presence [FieldCount]bool
+	presence [ak9753.FieldCount]bool
 	movement uint8
 
 	values [6]float32
-	ders   [FieldCount]float32
+	ders   [ak9753.FieldCount]float32
 	ders13 float32
 	ders24 float32
 
 	temp float32
-
 	smoothers [smoothingCount]*smoother
+
+	presenceChanged chan int
 
 	lastEval time.Time
 
@@ -44,6 +45,7 @@ func New(device ak9753.Device, options *Options) *Detector {
 			Interval:          time.Millisecond * 30,
 			PresenceThreshold: 10,
 			MovementThreshold: 10,
+			Smoothing:         0.05,
 		}
 	}
 
@@ -51,6 +53,7 @@ func New(device ak9753.Device, options *Options) *Detector {
 		dev:   device,
 		opts:  *options,
 		close: make(chan bool),
+		presenceChanged: make(chan int, ak9753.FieldCount),
 	}
 
 	for i := range d.smoothers {
@@ -66,8 +69,25 @@ func New(device ak9753.Device, options *Options) *Detector {
 
 func (d *Detector) Close() {
 	println("closing detector")
+	close(d.presenceChanged)
 	d.close <- true
 	close(d.close)
+}
+
+func (d *Detector) Options() Options {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	return d.opts
+}
+
+
+func (d *Detector) SetOptions(opts Options) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.opts = opts
+	for _, s := range d.smoothers {
+		s.avgWeigth = opts.Smoothing
+	}
 }
 
 func (d *Detector) PresentInField(idx int) bool {
@@ -76,6 +96,13 @@ func (d *Detector) PresentInField(idx int) bool {
 	r := d.presence[idx]
 	//d.presence[idx] = false
 	return r
+}
+
+/*
+	return the index of the field which has changed
+ */
+func (d *Detector) PresenceChanged() <- chan int {
+	return d.presenceChanged
 }
 
 func (d *Detector) PresentInField1() bool {
@@ -106,16 +133,21 @@ func (d *Detector) PresenceAnyFields(clear bool) bool {
 	//fmt.Printf("p: %v\n", d.presence)
 
 	if clear { // reset presence
-		d.presence = [FieldCount]bool{}
+		d.presence = [ak9753.FieldCount]bool{}
 	}
 
 	return r
 }
 
 func (d *Detector) Temperature() float32 {
+	t, _ := d.dev.Temperature()
+	return t
+}
+
+func (d *Detector) IR(idx int) float32 {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
-	return d.temp
+	return d.smoothers[idx].last
 }
 
 func (d *Detector) IR1() float32 {
@@ -185,6 +217,13 @@ func (d *Detector) Movement() uint8 {
 	return r
 }
 
+func (d *Detector) notifyPresence(idx int) {
+	select {
+	case d.presenceChanged <- idx:
+	default:
+	}
+}
+
 func (d *Detector) run() {
 	println("detector loop started")
 	defer println("detector loop stopped")
@@ -245,7 +284,7 @@ func (d *Detector) run() {
 		d.smoothers[5].add(diff24)
 
 		if time.Now().Sub(d.lastEval) > d.opts.Interval {
-			for i := 0; i < FieldCount; i++ {
+			for i := 0; i < ak9753.FieldCount; i++ {
 				der := d.smoothers[i].derivative()
 				d.ders[i] = der
 
@@ -253,8 +292,10 @@ func (d *Detector) run() {
 
 				if der > d.opts.PresenceThreshold {
 					d.presence[i] = true
+					d.notifyPresence(i)
 				} else if der < -d.opts.PresenceThreshold {
 					d.presence[i] = false
+					d.notifyPresence(i)
 				}
 			}
 

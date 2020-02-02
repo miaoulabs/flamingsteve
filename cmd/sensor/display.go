@@ -59,13 +59,13 @@ func (d *display) textDisplay() {
 			toXO(detector.PresentInField3()),
 			toXO(detector.PresentInField4()),
 		)
-		tm.Printf("sensor      | %8.2f | %8.2f | %8.2f | %8.2f |\n",
+		tm.Printf("sensor      | %8.3f | %8.3f | %8.3f | %8.3f |\n",
 			detector.IR1(),
 			detector.IR2(),
 			detector.IR3(),
 			detector.IR4(),
 		)
-		tm.Printf("derivative  | %8.2f | %8.2f | %8.2f | %8.2f |\n",
+		tm.Printf("derivative  | %8.3f | %8.3f | %8.3f | %8.3f |\n",
 			detector.DerivativeOfIR1(),
 			detector.DerivativeOfIR2(),
 			detector.DerivativeOfIR3(),

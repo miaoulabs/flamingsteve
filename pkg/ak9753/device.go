@@ -10,4 +10,6 @@ type Device interface {
 	IR4() (float32, error)
 	Temperature() (float32, error)
 	All() State
+
+	Subscribe(channel chan<- bool)
 }

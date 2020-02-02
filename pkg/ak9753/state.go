@@ -10,16 +10,20 @@ type State struct {
 }
 
 func (s State) Equal(other State) bool {
-	return sameFloat(s.Temperature, other.Temperature) &&
-		sameFloat(s.Ir1, other.Ir1) &&
-		sameFloat(s.Ir2, other.Ir2) &&
-		sameFloat(s.Ir3, other.Ir3) &&
-		sameFloat(s.Ir4, other.Ir4) &&
+	return sameF32(s.Temperature, other.Temperature) &&
+		sameF32(s.Ir1, other.Ir1) &&
+		sameF32(s.Ir2, other.Ir2) &&
+		sameF32(s.Ir3, other.Ir3) &&
+		sameF32(s.Ir4, other.Ir4) &&
 		s.DeviceId == s.DeviceId &&
 		s.CompagnyCode == s.CompagnyCode
 }
 
-func sameFloat(f1, f2 float32) bool {
+func (s State) Irs() [FieldCount]float32 {
+	return [FieldCount]float32{ s.Ir1, s.Ir2, s.Ir3, s.Ir4 }
+}
+
+func sameF32(f1, f2 float32) bool {
 	tolerance := 0.00000001
 	return math.Abs(float64(f1) - float64(f2)) < tolerance
 }

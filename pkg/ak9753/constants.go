@@ -7,7 +7,12 @@ func (c Cmd) toBytes() []byte {
 }
 
 const (
+	FieldCount      = 4
+
 	I2C_DEFAULT_ADDRESS = 0x64
+
+	SENSOR_VERSION_AK9750 = 0x00
+	SENSOR_VERSION_AK9753 = 0x01
 
 	DEVICE_ID = 0x13
 
