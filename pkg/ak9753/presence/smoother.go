@@ -1,4 +1,4 @@
-package pdetect
+package presence
 
 type smoother struct {
 	lastMarked float32

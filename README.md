@@ -30,6 +30,8 @@ Usage TBD
 Central service to be used for service (dis/re)covery. Also will tell you human are 
 expendable if a xenomorph is present on your spaceship. 
 
+Pretty much a embedded nats messaging server with a zeronconf service for discovery.
+
 ## Used techs
 
 - [periph.io](https://periph.io/project/library/)

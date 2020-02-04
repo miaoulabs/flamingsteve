@@ -7,7 +7,7 @@ func (c Cmd) toBytes() []byte {
 }
 
 const (
-	FieldCount      = 4
+	FieldCount = 4
 
 	I2C_DEFAULT_ADDRESS = 0x64
 

@@ -11,5 +11,8 @@ type Device interface {
 	Temperature() (float32, error)
 	All() State
 
+	/*
+	 A true will be pushed every time the sensor's state change
+	*/
 	Subscribe(channel chan<- bool)
 }

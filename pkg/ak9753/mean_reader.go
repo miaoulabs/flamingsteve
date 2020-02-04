@@ -6,9 +6,10 @@ import (
 )
 
 type Mean struct {
-	dev Device
-	state State
 	notify.Notifier
+
+	dev   Device
+	state State
 
 	sampleCount int
 	ir          [FieldCount][]float64
@@ -25,7 +26,7 @@ func NewMean(dev Device, samplesCount int) (*Mean, error) {
 	}
 
 	m := &Mean{
-		dev: dev,
+		dev:         dev,
 		sampleCount: samplesCount,
 	}
 
@@ -34,9 +35,9 @@ func NewMean(dev Device, samplesCount int) (*Mean, error) {
 	return m, nil
 }
 
-func (m *Mean) run () {
-	println("mean loop started")
-	defer println("mean loop stopped")
+func (m *Mean) run() {
+	log.Infof("mean loop started")
+	defer log.Infof("mean loop stopped")
 
 	changed := make(chan bool)
 	m.dev.Subscribe(changed)
@@ -69,7 +70,7 @@ func (m *Mean) DeviceId() (uint8, error) {
 }
 
 func (m *Mean) CompagnyCode() (uint8, error) {
-	return  m.dev.CompagnyCode()
+	return m.dev.CompagnyCode()
 }
 
 func (m *Mean) IR(idx int) float32 {

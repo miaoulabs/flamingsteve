@@ -1,4 +1,4 @@
-package pdetect
+package presence
 
 //Movement
 const (

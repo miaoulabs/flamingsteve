@@ -1,16 +1,17 @@
 package main
 
 import (
-	"flamingsteve/pkg/ak9753"
 	"fmt"
+	"github.com/draeron/gopkgs/logger"
+	"image"
+	"sync"
+	"time"
+
+	"flamingsteve/pkg/ak9753"
 	"github.com/aarzilli/nucular"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
-	"image"
-	"os"
-	"sync"
-	"time"
 )
 
 type ui struct {
@@ -19,8 +20,41 @@ type ui struct {
 	base      float64
 	ir        [ak9753.FieldCount][]float64
 	irTime    [ak9753.FieldCount][]time.Time
+	log       *logger.SugaredLogger
 
 	sync.RWMutex
+}
+
+func (u *ui) updateSensorData(wnd nucular.MasterWindow) {
+	maxValue := 60
+
+	changed := make(chan bool)
+	dev.Subscribe(changed)
+
+	for range changed {
+		if wnd.Closed() { //quit
+			return
+		}
+		wnd.Changed() // force redraw
+
+		u.Lock()
+		for i := 0; i < len(u.ir); i++ {
+			if len(u.ir[i]) > maxValue {
+				u.ir[i] = u.ir[i][1:]
+				u.irTime[i] = u.irTime[i][1:]
+			}
+			u.ir[i] = append(u.ir[i], float64(detector.IR(i)))
+			u.irTime[i] = append(u.irTime[i], time.Now())
+
+			//if len(u.ir[i]) > maxValue {
+			//	u.ir[i] = u.ir[i][:maxValue]
+			//	u.irTime[i] = u.irTime[i][:maxValue]
+			//}
+			//u.ir[i] = append([]float64{float64(detector.IR(i))}, u.ir[i]...)
+			//u.irTime[i] = append([]time.Time{time.Now()}, u.irTime[i]...)
+		}
+		u.Unlock()
+	}
 }
 
 func (ui *ui) renderUi(w *nucular.Window) {
@@ -104,7 +138,6 @@ func (ui *ui) drawSensor(w *nucular.Window, idx int) {
 	ir := ui.ir[idx]
 	ui.RUnlock()
 
-
 	if len(ir) > 2 {
 		ts := &chart.TimeSeries{
 			XValues: irTime,
@@ -137,7 +170,7 @@ func (ui *ui) drawSensor(w *nucular.Window, idx int) {
 		//}
 
 		graph := &chart.Chart{
-			Width: bounds.W,
+			Width:  bounds.W,
 			Height: bounds.H,
 			Title:  fmt.Sprintf("IR%d", idx),
 			Series: []chart.Series{
@@ -158,7 +191,7 @@ func (ui *ui) drawSensor(w *nucular.Window, idx int) {
 				Zero: chart.GridLine{
 					Value: 0,
 					Style: chart.Style{
-						Show: true,
+						Show:            true,
 						StrokeColor:     chart.ColorAlternateGray,
 						StrokeDashArray: []float64{5.0, 5.0},
 					},
@@ -172,9 +205,8 @@ func (ui *ui) drawSensor(w *nucular.Window, idx int) {
 
 		collector := &chart.ImageWriter{}
 		err := graph.Render(chart.PNG, collector)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error rendering graph: %v\n", err)
-		}
+		ui.log.LogIfErr(err)
+		//ui.log.Errorf("error rendering graph: %v\n", err)
 
 		img, err := collector.Image()
 		if err == nil {
@@ -182,7 +214,8 @@ func (ui *ui) drawSensor(w *nucular.Window, idx int) {
 				out.DrawImage(bounds, rgba)
 			}
 		} else {
-			fmt.Fprintf(os.Stderr, "error collecting graph: %v\n", err)
+			ui.log.LogIfErr(err)
+			//fmt.Fprintf(os.Stderr, "error collecting graph: %v\n", err)
 		}
 	}
 }

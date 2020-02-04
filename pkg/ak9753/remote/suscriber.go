@@ -18,17 +18,20 @@ type Suscriber struct {
 	notify.Notifier
 }
 
-func NewSuscriber(url string) (*Suscriber, error) {
-	s := &Suscriber{
-	}
+func NewSuscriber(url string, name string) (*Suscriber, error) {
+	s := &Suscriber{}
 
 	if url == "" {
 		url = "nats//localhost:4222"
 	}
 
+	if name == "" {
+		name = "ak9753-suscriber"
+	}
+
 	var err error
 	s.conn, err = nats.Connect(url,
-		nats.Name("ak9753-suscriber"),
+		nats.Name(name),
 		nats.ErrorHandler(natsErrorHandler),
 		nats.ClosedHandler(natsCloseHandler),
 	)
@@ -61,7 +64,7 @@ func NewSuscriber(url string) (*Suscriber, error) {
 }
 
 func (s *Suscriber) Close() {
-	println("closing suscriber")
+	log.Infof("closing suscriber")
 	s.encoded.Close()
 	s.UnsubscribeAll()
 }

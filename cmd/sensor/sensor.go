@@ -1,30 +1,29 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"flamingsteve/pkg/ak9753"
-	rm "flamingsteve/pkg/ak9753/remote"
-	"flamingsteve/pkg/presence_detector"
+	"flamingsteve/pkg/ak9753/presence"
+	"flamingsteve/pkg/ak9753/remote"
+	"flamingsteve/pkg/muthur"
+
+	"github.com/draeron/gopkgs/logger"
 	"github.com/spf13/pflag"
 	"periph.io/x/periph"
 	"periph.io/x/periph/conn/i2c/i2creg"
 	"periph.io/x/periph/host"
-
-	"time"
 )
 
 var (
 	threshold = pflag.Float32P("threshold", "t", 10, "presence threshold")
 	interval  = pflag.DurationP("interval", "i", time.Millisecond*30, "interval for IR evaluration")
 	smoothing = pflag.Float32P("smoothing", "s", 0.05, "0.3 very steep, 0.1 less steep, 0.05 less steep")
-	ui        = pflag.Bool("ui", false, "display real time informatio on the terminal")
-	publish   = pflag.BoolP("publish", "p", false, "url for publish data push")
-	remote    = pflag.Bool("remote", false, "connect to a remote sensor")
+	ui        = pflag.Bool("ui", false, "display real time information on the terminal")
+	orphan    = pflag.Bool("orphan", false, "don't try to connect to muthur")
 	natsUrl   = pflag.String("nats-server", "", "publish nats server where to push the sensor data")
 )
 
@@ -32,64 +31,72 @@ func hostInit() (*periph.State, error) {
 	return host.Init()
 }
 
-var detector *pdetect.Detector
+var detector *presence.Detector
 
-func mainImpl() error {
+func main() {
+	pflag.Parse()
+	log := logger.New("main")
+	presence.SetLogger(logger.New("detector"))
+	remote.SetLogger(logger.New("remote"))
+	ak9753.SetLogger(logger.New("ak9753"))
+
+	ak9753.SetLogger(logger.New("ak9753"))
 
 	var err error
 	var device ak9753.Device
 
-	if !*remote {
-		state, err := hostInit()
-		if err != nil {
-			return err
-		}
+	state, err := hostInit()
+	log.StopIfErr(err)
 
-		for i, drv := range state.Loaded {
-			fmt.Printf("driver #%d: %v\n", i, drv.String())
-		}
-
-		b, err := i2creg.Open("")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer b.Close()
-
-		fmt.Printf("i2c bus %s is open\n", b.String())
-
-		ak, err := ak9753.New(b, ak9753.I2C_DEFAULT_ADDRESS)
-		if err != err {
-			return err
-		}
-
-		if ak == nil {
-			return errors.New("null device")
-		}
-
-		device, err = ak9753.NewReader(ak)
-		if err != nil {
-			return err
-		}
-	} else {
-		device, err = rm.NewSuscriber(*natsUrl)
-		if err != nil {
-			return err
-		}
+	for i, drv := range state.Loaded {
+		log.Infof("driver #%d: %v", i, drv.String())
 	}
+
+	b, err := i2creg.Open("")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer b.Close()
+
+	log.Infof("i2c bus %s is open", b.String())
+
+	ak, err := ak9753.New(b, ak9753.I2C_DEFAULT_ADDRESS)
+	log.StopIfErr(err)
+
+	if ak == nil {
+		log.Fatal("null device")
+	}
+
+	device, err = ak9753.NewReader(ak)
+	log.StopIfErr(err)
 
 	did, _ := device.DeviceId()
 	cid, _ := device.CompagnyCode()
-	fmt.Printf("device id: 0x%x, compagny id: 0x%x\n", did, cid)
+	log.Infof("device id: 0x%x, compagny id: 0x%x", did, cid)
 
-	if *publish {
-		device, err = rm.NewPublisher(device, *natsUrl)
-		if err != nil {
-			return err
+	if !*orphan {
+		log.Infof("adoption mode enabled, scanning for mother")
+
+		if *natsUrl == "" {
+			var mothers muthur.Servers
+
+			// keep trying until there is a connections
+			for mothers == nil || len(mothers) == 0 {
+				mothers = muthur.ResolveServers(time.Second * 2)
+			}
+
+			//log.Infof("found %d muthur on the local network", len(mothers))
+			//*natsUrl = fmt.Sprintf("nats://%s:%d", mothers[0].HostName, mothers[0].Port)
+			*natsUrl = mothers[0].HostName
 		}
+
+		log.Infof("connecting to muthur at '%s'", *natsUrl)
+		device, err = remote.NewPublisher(device, *natsUrl)
+		log.StopIfErr(err)
 	}
 	defer device.Close()
 
-	detector = pdetect.New(device, &pdetect.Options{
+	detector = presence.New(device, &presence.Options{
 		Interval:          *interval,
 		PresenceThreshold: *threshold,
 		MovementThreshold: 10,
@@ -104,18 +111,6 @@ func mainImpl() error {
 	}
 
 	waitForTerm()
-
-
-	return err
-}
-
-func main() {
-	pflag.Parse()
-
-	if err := mainImpl(); err != nil {
-		fmt.Fprintf(os.Stderr, "i2c-io: %s.\n", err)
-		os.Exit(1)
-	}
 }
 
 func waitForTerm() {

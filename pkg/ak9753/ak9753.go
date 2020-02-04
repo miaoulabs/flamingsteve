@@ -72,12 +72,12 @@ func (d *Physical) Model() (string, error) {
 
 func (d *Physical) DataReady() bool {
 	data, err := d.ST1()
-	return err == nil && (data & (1 << 0)) != 0 //Bit 0 is DRDY
+	return err == nil && (data&(1<<0)) != 0 //Bit 0 is DRDY
 }
 
 func (d *Physical) DataOverRun() bool {
 	data, err := d.ST1()
-	return err == nil && (data & 1 << 1) != 0 //Bit 1 is DOR
+	return err == nil && (data&1<<1) != 0 //Bit 1 is DOR
 }
 
 func (d *Physical) ST1() (uint8, error) {

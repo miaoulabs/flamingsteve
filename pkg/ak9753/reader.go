@@ -2,8 +2,6 @@ package ak9753
 
 import (
 	"flamingsteve/pkg/notify"
-	"fmt"
-	"os"
 	"sync"
 	"time"
 )
@@ -13,18 +11,17 @@ import (
 	and store it's data
 */
 type Reader struct {
-	dev     *Physical
-	close   chan bool
-	mutex   sync.RWMutex
-	state   State
-	lastErr error
-
 	notify.Notifier
+
+	dev   *Physical
+	close chan bool
+	mutex sync.RWMutex
+	state State
 }
 
 func NewReader(dev *Physical) (*Reader, error) {
 	r := &Reader{
-		dev: dev,
+		dev:   dev,
 		close: make(chan bool),
 	}
 
@@ -41,7 +38,7 @@ func NewReader(dev *Physical) (*Reader, error) {
 }
 
 func (r *Reader) Close() {
-	println("closing ak9753 reader")
+	log.Infof("closing ak9753 reader")
 	r.close <- true
 	close(r.close)
 	r.UnsubscribeAll()
@@ -67,20 +64,20 @@ func (r *Reader) initDevice() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("sensor model: %s\n", model)
+	log.Infof("sensor model: %s", model)
 
 	return nil
 }
 
 func (r *Reader) run() {
-	println("ak9753 reader loop started")
-	defer println("ak9753 reader loop stopped")
+	log.Infof("ak9753 reader loop started")
+	defer log.Infof("ak9753 reader loop stopped")
 
 	var err error
 
 	err = r.dev.StartNextSample()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error starting next sample: %w", err)
+		log.Errorf("error starting next sample: %w", err)
 	}
 
 	tick := time.NewTicker(time.Millisecond * 5)
@@ -103,32 +100,32 @@ func (r *Reader) run() {
 
 		state.Temperature, err = r.dev.Temperature()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
+			log.Errorf("error reading temperature: %w", err)
 		}
 
 		state.Ir1, err = r.dev.IR1()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample for ir1: %w", err)
+			log.Errorf("error reading sample for ir1: %w", err)
 		}
 
 		state.Ir2, err = r.dev.IR2()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 		}
 
 		state.Ir3, err = r.dev.IR3()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 		}
 
 		state.Ir4, err = r.dev.IR4()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 		}
 
 		err = r.dev.StartNextSample()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error starting next sample: %w", err)
+			log.Errorf("error starting next sample: %w", err)
 		}
 
 		// update state

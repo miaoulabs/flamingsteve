@@ -1,9 +1,7 @@
-package pdetect
+package presence
 
 import (
 	"flamingsteve/pkg/ak9753"
-	"fmt"
-	"os"
 	"sync"
 	"time"
 )
@@ -27,7 +25,7 @@ type Detector struct {
 	ders13 float32
 	ders24 float32
 
-	temp float32
+	temp      float32
 	smoothers [smoothingCount]*smoother
 
 	presenceChanged chan int
@@ -50,9 +48,9 @@ func New(device ak9753.Device, options *Options) *Detector {
 	}
 
 	d := &Detector{
-		dev:   device,
-		opts:  *options,
-		close: make(chan bool),
+		dev:             device,
+		opts:            *options,
+		close:           make(chan bool),
 		presenceChanged: make(chan int, ak9753.FieldCount),
 	}
 
@@ -68,7 +66,7 @@ func New(device ak9753.Device, options *Options) *Detector {
 }
 
 func (d *Detector) Close() {
-	println("closing detector")
+	log.Infof("closing detector")
 	close(d.presenceChanged)
 	d.close <- true
 	close(d.close)
@@ -79,7 +77,6 @@ func (d *Detector) Options() Options {
 	defer d.mutex.Unlock()
 	return d.opts
 }
-
 
 func (d *Detector) SetOptions(opts Options) {
 	d.mutex.Lock()
@@ -100,8 +97,8 @@ func (d *Detector) PresentInField(idx int) bool {
 
 /*
 	return the index of the field which has changed
- */
-func (d *Detector) PresenceChanged() <- chan int {
+*/
+func (d *Detector) PresenceChanged() <-chan int {
 	return d.presenceChanged
 }
 
@@ -225,8 +222,8 @@ func (d *Detector) notifyPresence(idx int) {
 }
 
 func (d *Detector) run() {
-	println("detector loop started")
-	defer println("detector loop stopped")
+	log.Infof("detector loop started")
+	defer log.Infof("detector loop stopped")
 
 	tick := time.NewTicker(time.Millisecond * 5)
 	defer tick.Stop()
@@ -240,31 +237,31 @@ func (d *Detector) run() {
 
 		ir1, err := d.dev.IR1()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 			continue
 		}
 
 		ir2, err := d.dev.IR2()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 			continue
 		}
 
 		ir3, err := d.dev.IR3()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 			continue
 		}
 
 		ir4, err := d.dev.IR4()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading sample: %w", err)
+			log.Errorf("error reading sample: %w", err)
 			continue
 		}
 
 		temp, err := d.dev.Temperature()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading temperature: %w", err)
+			log.Errorf("error reading temperature: %w", err)
 		}
 
 		diff13 := ir1 - ir3

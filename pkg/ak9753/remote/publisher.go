@@ -2,9 +2,7 @@ package remote
 
 import (
 	"flamingsteve/pkg/ak9753"
-	"fmt"
 	"github.com/nats-io/nats.go"
-	"os"
 	"time"
 )
 
@@ -25,7 +23,7 @@ func NewPublisher(dev ak9753.Device, url string) (*Publisher, error) {
 	}
 
 	p := &Publisher{
-		dev: dev,
+		dev:   dev,
 		close: make(chan bool),
 	}
 
@@ -56,15 +54,15 @@ func NewPublisher(dev ak9753.Device, url string) (*Publisher, error) {
 
 func (p *Publisher) Close() {
 	p.dev.Close()
-	println("closing publisher")
+	log.Infof("closing publisher")
 	p.close <- true
 	close(p.close)
 }
 
 func (p *Publisher) run() {
-	println("publisher loop started")
+	log.Infof("publisher loop started")
 	defer p.encoded.Close()
-	defer println("publisher loop stopped")
+	defer log.Infof("publisher loop stopped")
 
 	last := ak9753.State{}
 
@@ -84,7 +82,7 @@ func (p *Publisher) run() {
 			last = newV
 			err := p.encoded.Publish(Topic, last)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error sending message: %w", err)
+				log.Errorf("error sending message: %w", err)
 			}
 		}
 	}
