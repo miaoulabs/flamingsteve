@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flamingsteve/pkg/muthur"
+	"flamingsteve/pkg/discovery"
 	"github.com/draeron/gopkgs/logger"
 	"github.com/grandcat/zeroconf"
 	natsd "github.com/nats-io/nats-server/v2/server"
@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -17,10 +18,15 @@ func main() {
 	log.Info("started")
 	defer log.Info("stopped")
 
+	if alreadyExists() {
+		log.Errorf("another muthur exists, THERE CAN BE ONLY ONE!")
+		return
+	}
+
 	log.Info("registering zeroconf dns")
 	mdns, err := zeroconf.Register("muthur",
-		muthur.ZeroConfServiceName,
-		muthur.ZeroConfDomain,
+		discovery.ZeroConfServiceName,
+		discovery.ZeroConfDomain,
 		4222,
 		[]string{},
 		listMulticastInterfaces(),
@@ -82,4 +88,9 @@ func listMulticastInterfaces() []net.Interface {
 	}
 
 	return interfaces
+}
+
+func alreadyExists() bool {
+	others := discovery.ResolveServers(time.Second * 3)
+	return len(others) > 0
 }

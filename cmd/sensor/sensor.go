@@ -9,7 +9,7 @@ import (
 	"flamingsteve/pkg/ak9753"
 	"flamingsteve/pkg/ak9753/presence"
 	"flamingsteve/pkg/ak9753/remote"
-	"flamingsteve/pkg/muthur"
+	"flamingsteve/pkg/discovery"
 
 	"github.com/draeron/gopkgs/logger"
 	"github.com/spf13/pflag"
@@ -78,11 +78,11 @@ func main() {
 		log.Infof("adoption mode enabled, scanning for mother")
 
 		if *natsUrl == "" {
-			var mothers muthur.Servers
+			var mothers discovery.Servers
 
 			// keep trying until there is a connections
 			for mothers == nil || len(mothers) == 0 {
-				mothers = muthur.ResolveServers(time.Second * 2)
+				mothers = discovery.ResolveServers(time.Second * 2)
 			}
 
 			//log.Infof("found %d muthur on the local network", len(mothers))

@@ -1,4 +1,4 @@
-package muthur
+package discovery
 
 import (
 	"context"

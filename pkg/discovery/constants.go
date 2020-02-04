@@ -1,4 +1,4 @@
-package muthur
+package discovery
 
 const (
 	ZeroConfServiceName = "_nats._tcp"

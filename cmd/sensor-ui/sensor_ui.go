@@ -7,7 +7,7 @@ import (
 	"flamingsteve/pkg/ak9753"
 	"flamingsteve/pkg/ak9753/presence"
 	"flamingsteve/pkg/ak9753/remote"
-	"flamingsteve/pkg/muthur"
+	"flamingsteve/pkg/discovery"
 	"github.com/aarzilli/nucular"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/draeron/gopkgs/logger"
@@ -29,9 +29,9 @@ func main() {
 	remote.SetLogger(logger.New("remote"))
 	ak9753.SetLogger(logger.New("ak9753"))
 
-	var mothers muthur.Servers
+	var mothers discovery.Servers
 	for mothers == nil || len(mothers) == 0 {
-		mothers = muthur.ResolveServers(time.Second * 2)
+		mothers = discovery.ResolveServers(time.Second * 3)
 	}
 
 	// we only need one
