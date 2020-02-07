@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flamingsteve/pkg/muthur"
 	"fmt"
 	"os"
 	"os/signal"
@@ -18,14 +19,25 @@ import (
 	"periph.io/x/periph/host"
 )
 
-var (
-	threshold = pflag.Float32P("threshold", "t", 10, "presence threshold")
-	interval  = pflag.DurationP("interval", "i", time.Millisecond*30, "interval for IR evaluration")
-	smoothing = pflag.Float32P("smoothing", "s", 0.05, "0.3 very steep, 0.1 less steep, 0.05 less steep")
-	ui        = pflag.Bool("ui", false, "display real time information on the terminal")
-	orphan    = pflag.Bool("orphan", false, "don't try to connect to muthur")
-	natsUrl   = pflag.String("nats-server", "", "publish nats server where to push the sensor data")
-)
+var args = struct {
+	threshold float32
+	interval  time.Duration
+	presence  bool
+	ui        bool
+	orphan    bool
+	mean      int
+}{}
+
+func init() {
+	pflag.Float32VarP(&args.threshold, "threshold", "t", 100, "presence threshold")
+	pflag.IntVar(&args.mean, "mean", 6, "number of sample to use for mean")
+	pflag.DurationVarP(&args.interval, "interval", "i", time.Millisecond*30, "interval for presence evaluation")
+	pflag.BoolVarP(&args.presence, "presence", "p", true, "test for presence")
+
+	pflag.BoolVar(&args.ui, "ui", false, "display real time information on the terminal")
+	pflag.BoolVar(&args.orphan, "orphan", false, "don't try to connect to muthur")
+
+}
 
 func hostInit() (*periph.State, error) {
 	return host.Init()
@@ -39,8 +51,7 @@ func main() {
 	presence.SetLogger(logger.New("detector"))
 	remote.SetLogger(logger.New("remote"))
 	ak9753.SetLogger(logger.New("ak9753"))
-
-	ak9753.SetLogger(logger.New("ak9753"))
+	muthur.SetLogger(logger.New("muthur"))
 
 	var err error
 	var device ak9753.Device
@@ -74,37 +85,36 @@ func main() {
 	cid, _ := device.CompagnyCode()
 	log.Infof("device id: 0x%x, compagny id: 0x%x", did, cid)
 
-	if !*orphan {
-		log.Infof("adoption mode enabled, scanning for mother")
+	if !args.orphan {
+		log.Infof("adoption mode enabled, scanning for muthur")
 
-		if *natsUrl == "" {
-			var mothers discovery.Servers
+		ident := discovery.NewIdentifier(discovery.IdentifierConfig{
+			Name:  "protopi",
+			Model: "ak9753",
+			Type:  "sensor",
+		}, logger.New("identifier"))
 
-			// keep trying until there is a connections
-			for mothers == nil || len(mothers) == 0 {
-				mothers = discovery.ResolveServers(time.Second * 2)
-			}
+		muthur.Connect(ident.Id())
+		ident.Connect()
 
-			//log.Infof("found %d muthur on the local network", len(mothers))
-			//*natsUrl = fmt.Sprintf("nats://%s:%d", mothers[0].HostName, mothers[0].Port)
-			*natsUrl = mothers[0].HostName
-		}
+		defer ident.Close()
+		defer muthur.Close()
 
-		log.Infof("connecting to muthur at '%s'", *natsUrl)
-		device, err = remote.NewPublisher(device, *natsUrl)
+		device, err = remote.NewPublisher(device, ident)
 		log.StopIfErr(err)
 	}
 	defer device.Close()
 
-	detector = presence.New(device, &presence.Options{
-		Interval:          *interval,
-		PresenceThreshold: *threshold,
-		MovementThreshold: 10,
-		Smoothing:         *smoothing,
-	})
-	defer detector.Close()
+	if args.presence {
+		//detector = presence.New(device, &presence.Options{
+		//	Interval:          args.interval,
+		//	PresenceThreshold: args.threshold,
+		//	Smoothing:         args.mean,
+		//})
+		//defer detector.Close()
+	}
 
-	if *ui {
+	if args.ui {
 		d := display{closed: make(chan bool)}
 		go d.textDisplay()
 		defer d.close()

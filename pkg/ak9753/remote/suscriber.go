@@ -2,71 +2,53 @@ package remote
 
 import (
 	"flamingsteve/pkg/ak9753"
+	"flamingsteve/pkg/discovery"
+	"flamingsteve/pkg/muthur"
 	"flamingsteve/pkg/notify"
 	"github.com/nats-io/nats.go"
 	"sync"
 )
 
 type Suscriber struct {
-	conn    *nats.Conn
-	encoded *nats.EncodedConn
-	subs    *nats.Subscription
-
+	sub   *nats.Subscription
 	state ak9753.State
 	mutex sync.RWMutex
-
 	notify.Notifier
 }
 
-func NewSuscriber(url string, name string) (*Suscriber, error) {
+func NewSuscriber(entry *discovery.Entry) (*Suscriber, error) {
 	s := &Suscriber{}
-
-	if url == "" {
-		url = "nats//localhost:4222"
-	}
-
-	if name == "" {
-		name = "ak9753-suscriber"
-	}
-
 	var err error
-	s.conn, err = nats.Connect(url,
-		nats.Name(name),
-		nats.ErrorHandler(natsErrorHandler),
-		nats.ClosedHandler(natsCloseHandler),
-	)
-	if err != nil {
-		return nil, err
+
+	if entry != nil {
+		err = s.Change(*entry)
 	}
 
-	s.encoded, err = nats.NewEncodedConn(s.conn, nats.JSON_ENCODER)
-	if err != nil {
-		s.conn.Close()
-		return nil, err
-	}
-
-	s.subs, err = s.encoded.Subscribe(Topic, func(state *ak9753.State) {
-		s.mutex.Lock()
-		haschanged := !s.state.Equal(*state)
-		s.state = *state
-		s.mutex.Unlock()
-
-		if haschanged {
-			s.Notify()
-		}
-	})
-
-	if err != nil {
-		s.encoded.Close()
-	}
-
-	return s, nil
+	return s, err
 }
 
 func (s *Suscriber) Close() {
 	log.Infof("closing suscriber")
-	s.encoded.Close()
+	s.sub.Unsubscribe()
 	s.UnsubscribeAll()
+}
+
+func (s *Suscriber) Change(entry discovery.Entry) error {
+	s.sub.Unsubscribe()
+	var err error
+	s.sub, err = muthur.Connection().Subscribe(entry.DataTopic, s.update)
+	return err
+}
+
+func (s *Suscriber) update(state *ak9753.State) {
+	s.mutex.Lock()
+	haschanged := !s.state.Equal(*state)
+	s.state = *state
+	s.mutex.Unlock()
+
+	if haschanged {
+		s.Notify()
+	}
 }
 
 func (s *Suscriber) DeviceId() (uint8, error) {
@@ -79,6 +61,12 @@ func (s *Suscriber) CompagnyCode() (uint8, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.CompagnyCode, nil
+}
+
+func (s *Suscriber) IR(idx int) (float32, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	return s.state.Irs()[idx], nil
 }
 
 func (s *Suscriber) IR1() (float32, error) {

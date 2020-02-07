@@ -21,29 +21,30 @@ type ui struct {
 	ir        [ak9753.FieldCount][]float64
 	irTime    [ak9753.FieldCount][]time.Time
 	log       *logger.SugaredLogger
+	changed   chan bool
+	dev       ak9753.Device
+	wnd       nucular.MasterWindow
+
+	selectedSensorId int
 
 	sync.RWMutex
 }
 
-func (u *ui) updateSensorData(wnd nucular.MasterWindow) {
+func (u *ui) updateSensorData() {
 	maxValue := 60
 
-	changed := make(chan bool)
-	dev.Subscribe(changed)
-
-	for range changed {
-		if wnd.Closed() { //quit
+	for range u.changed {
+		if u.wnd.Closed() { //quit
 			return
 		}
-		wnd.Changed() // force redraw
-
 		u.Lock()
 		for i := 0; i < len(u.ir); i++ {
 			if len(u.ir[i]) > maxValue {
 				u.ir[i] = u.ir[i][1:]
 				u.irTime[i] = u.irTime[i][1:]
 			}
-			u.ir[i] = append(u.ir[i], float64(detector.IR(i)))
+			ir, _ := u.dev.IR(i)
+			u.ir[i] = append(u.ir[i], float64(ir))
 			u.irTime[i] = append(u.irTime[i], time.Now())
 
 			//if len(u.ir[i]) > maxValue {
@@ -54,6 +55,8 @@ func (u *ui) updateSensorData(wnd nucular.MasterWindow) {
 			//u.irTime[i] = append([]time.Time{time.Now()}, u.irTime[i]...)
 		}
 		u.Unlock()
+
+		u.wnd.Changed() // force redraw
 	}
 }
 
@@ -71,6 +74,24 @@ func (ui *ui) renderUi(w *nucular.Window) {
 		ui.renderProps(p)
 		p.GroupEnd()
 	}
+}
+
+func (ui *ui) selectSensor(id string) {
+	if s, ok := sensors.Load(id); ok {
+		if dev, ok := s.(ak9753.Device); ok {
+			ui.Lock()
+			if ui.dev != nil {
+				ui.dev.UnsubscribeAll()
+			}
+
+			if dev != nil {
+				dev.Subscribe(ui.changed)
+				ui.dev = dev
+			}
+			ui.Unlock()
+		}
+	}
+
 }
 
 func (ui *ui) renderSensors(w *nucular.Window) {
@@ -95,7 +116,19 @@ func (ui *ui) renderProps(p *nucular.Window) {
 		p.Row(height).Dynamic(1)
 	}
 
-	opts := detector.Options()
+	sensorIds := sensorsIds()
+
+	// no sensor skip!
+	if len(sensorIds) == 0 {
+		return
+	}
+
+	single()
+
+	selected := p.ComboSimple(sensorIds, ui.selectedSensorId, 0)
+	if selected != ui.selectedSensorId {
+		ui.selectSensor(sensorIds[selected])
+	}
 
 	double()
 	//r := 65536.0 / 2
@@ -122,9 +155,9 @@ func (ui *ui) renderProps(p *nucular.Window) {
 	if p.SliderInt(1, &ui.presence, 20, 1) {
 	}
 
-	opts.Smoothing = float32(ui.smoothing)
-	opts.PresenceThreshold = float32(ui.presence)
-	detector.SetOptions(opts)
+	//opts.Smoothing = float32(ui.smoothing)
+	//opts.PresenceThreshold = float32(ui.presence)
+	//detector.SetOptions(opts)
 }
 
 func (ui *ui) drawSensor(w *nucular.Window, idx int) {

@@ -2,35 +2,60 @@
 
 > Because why not?
 
-## `cmd/sensor`
+## TODO
+
+- [x] Events bus scalfolding
+- [x] Events bus autodiscovery (zeroconf)
+- [x] Sensor: ak9753 hardware support
+- [ ] Sensor: persistent state (during restart)
+- [ ] Sensor: support other sensors model
+- [ ] Sensor: unique id generator (base on MAC)
+- [x] Sensor UI: display of sensor data
+- [x] Sensor UI: auto add/remove sensors
+- [ ] Sensor UI: Remote configuration
+- [ ] Sensor UI: Generic configs ui
+- [ ] Display: simulator
+- [ ] Display: flame panel
+- [ ] muthur: JSON-RPC for react based frontend 
+- [ ] Seq: simple display sequencer
+- [ ] Game Logic
+- [ ] docker compose
+- [ ] deamonise processes
+
+## Sensor: `cmd/sensor`
 
 Read outs the data from a [ak9753](http://wiki.seeedstudio.com/Grove-Human_Presence_Sensor-AK9753/) sensor.
 
 ```text
 Usage of sensor:
-  -i, --interval duration    interval for IR evaluration (default 30ms)
+  -i, --interval duration    interval for IR evaluation (default 5ms)
       --nats-server string   publish nats server where to push the sensor data
   -p, --publish              url for publish data push
-      --remote               connect to a remote sensor
-  -s, --smoothing float32    0.3 very steep, 0.1 less steep, 0.05 less steep (default 0.05)
-  -t, --threshold float32    presence threshold (default 10)
-      --ui                   display real time informatio on the terminal
+      --ui                   display real time information on the terminal
 ```
 
-## `cmd/sensor-ui`
+## Sensor UI: `cmd/sensui`
 
-Connects to a [nats server](https://docs.nats.io/) and display sensor data.
+Connects to muthur ([nats server](https://docs.nats.io/), display sensor data and set remote configuration.
 
-```text
-Usage TBD
-```
+## Sensor Simulator: `cmd/sensim`
+
+Simulate one or more sensors.
 
 ## `cmd/muthur`
 
 Central service to be used for service (dis/re)covery. Also will tell you human are 
 expendable if a xenomorph is present on your spaceship. 
 
-Pretty much a embedded nats messaging server with a zeronconf service for discovery.
+Pretty much a embedded nats messaging server with a zeroconf service for discovery.
+
+## Sequencer: `cmd/seq`
+
+Small program which use a novation launchpad to display pixel's sequence
+
+## Display Simulator: `cmd/dispsim`
+
+Simulate a display device (flame panel).
 
 ## Used techs
 

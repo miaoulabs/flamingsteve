@@ -1,14 +1,12 @@
 package main
 
 import (
-	"flamingsteve/pkg/discovery"
+	"flamingsteve/pkg/muthur"
 	"github.com/draeron/gopkgs/logger"
 	"github.com/grandcat/zeroconf"
 	natsd "github.com/nats-io/nats-server/v2/server"
-	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 )
 
@@ -25,11 +23,11 @@ func main() {
 
 	log.Info("registering zeroconf dns")
 	mdns, err := zeroconf.Register("muthur",
-		discovery.ZeroConfServiceName,
-		discovery.ZeroConfDomain,
+		muthur.ZeroConfServiceName,
+		muthur.ZeroConfDomain,
 		4222,
 		[]string{},
-		listMulticastInterfaces(),
+		muthur.ListMulticastInterfaces(),
 	)
 	log.StopIfErr(err)
 	defer mdns.Shutdown()
@@ -64,33 +62,7 @@ func main() {
 	svr.Start()
 }
 
-/*
-	This a copy/paste from zeroconf package, except we filter
-	vEthernet (docker) interface
- */
-func listMulticastInterfaces() []net.Interface {
-	var interfaces []net.Interface
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return nil
-	}
-	for _, ifi := range ifaces {
-		if (ifi.Flags & net.FlagUp) == 0 {
-			continue
-		}
-		if strings.Contains(ifi.Name, "vEthernet") {
-			continue
-		}
-
-		if (ifi.Flags & net.FlagMulticast) > 0 {
-			interfaces = append(interfaces, ifi)
-		}
-	}
-
-	return interfaces
-}
-
 func alreadyExists() bool {
-	others := discovery.ResolveServers(time.Second * 3)
+	others := muthur.ResolveServers(time.Second * 3)
 	return len(others) > 0
 }

@@ -2,6 +2,11 @@ package notify
 
 import "sync"
 
+type Nofifier interface {
+	Subscribe(channel chan<- bool)
+	UnsubscribeAll()
+}
+
 type Notifier struct {
 	suscribers []chan<- bool
 

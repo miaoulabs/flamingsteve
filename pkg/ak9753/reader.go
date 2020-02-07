@@ -77,7 +77,7 @@ func (r *Reader) run() {
 
 	err = r.dev.StartNextSample()
 	if err != nil {
-		log.Errorf("error starting next sample: %w", err)
+		log.Errorf("error starting next sample: %v", err)
 	}
 
 	tick := time.NewTicker(time.Millisecond * 5)
@@ -100,32 +100,32 @@ func (r *Reader) run() {
 
 		state.Temperature, err = r.dev.Temperature()
 		if err != nil {
-			log.Errorf("error reading temperature: %w", err)
+			log.Errorf("error reading temperature: %v", err)
 		}
 
 		state.Ir1, err = r.dev.IR1()
 		if err != nil {
-			log.Errorf("error reading sample for ir1: %w", err)
+			log.Errorf("error reading sample for ir1: %v", err)
 		}
 
 		state.Ir2, err = r.dev.IR2()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 		}
 
 		state.Ir3, err = r.dev.IR3()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 		}
 
 		state.Ir4, err = r.dev.IR4()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 		}
 
 		err = r.dev.StartNextSample()
 		if err != nil {
-			log.Errorf("error starting next sample: %w", err)
+			log.Errorf("error starting next sample: %v", err)
 		}
 
 		// update state
@@ -150,6 +150,12 @@ func (r *Reader) CompagnyCode() (uint8, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	return r.state.CompagnyCode, nil
+}
+
+func (r *Reader) IR(idx int) (float32, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	return r.state.Irs()[idx], nil
 }
 
 func (r *Reader) IR1() (float32, error) {

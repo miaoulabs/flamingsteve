@@ -237,31 +237,31 @@ func (d *Detector) run() {
 
 		ir1, err := d.dev.IR1()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 			continue
 		}
 
 		ir2, err := d.dev.IR2()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 			continue
 		}
 
 		ir3, err := d.dev.IR3()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 			continue
 		}
 
 		ir4, err := d.dev.IR4()
 		if err != nil {
-			log.Errorf("error reading sample: %w", err)
+			log.Errorf("error reading sample: %v", err)
 			continue
 		}
 
 		temp, err := d.dev.Temperature()
 		if err != nil {
-			log.Errorf("error reading temperature: %w", err)
+			log.Errorf("error reading temperature: %v", err)
 		}
 
 		diff13 := ir1 - ir3

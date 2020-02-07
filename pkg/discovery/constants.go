@@ -1,6 +1,7 @@
 package discovery
 
 const (
-	ZeroConfServiceName = "_nats._tcp"
-	ZeroConfDomain      = "local."
+	TopicScan      = "discovery.who"
+	TopicDeviceOn  = "discovery.iam"
+	TopicDeviceOff = "discovery.idie"
 )
