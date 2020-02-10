@@ -15,10 +15,10 @@ type Publisher struct {
 	dev   ak9753.Device
 	conn  *nats.Conn
 	close chan bool
-	ident *discovery.Identifier
+	ident *discovery.Component
 }
 
-func NewPublisher(dev ak9753.Device, ident *discovery.Identifier) (*Publisher, error) {
+func NewPublisher(dev ak9753.Device, ident *discovery.Component) (*Publisher, error) {
 	if dev == nil {
 		panic("ak9753 cannot be nil")
 	}
@@ -61,7 +61,7 @@ func (p *Publisher) run() {
 
 		if !newV.Equal(last) {
 			last = newV
-			err := p.ident.PushRaw(last)
+			err := p.ident.PushData(last)
 			if err != nil {
 				log.Errorf("error sending message: %v", err)
 			}
@@ -105,10 +105,13 @@ func (p *Publisher) All() ak9753.State {
 	return p.dev.All()
 }
 
-func (p *Publisher) UnsubscribeAll() {
-	p.dev.UnsubscribeAll()
-}
+//func (p *Publisher) UnsubscribeAll() {
+//}
 
 func (p *Publisher) Subscribe(channel chan<- bool) {
 	p.dev.Subscribe(channel)
+}
+
+func (p *Publisher) Unsubscribe(channel chan<- bool) {
+	p.dev.Unsubscribe(channel)
 }

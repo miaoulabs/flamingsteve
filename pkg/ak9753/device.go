@@ -1,6 +1,6 @@
 package ak9753
 
-import "flamingsteve/pkg/notify"
+import "flamingsteve/pkg/notification"
 
 type Device interface {
 	Close()
@@ -18,5 +18,5 @@ type Device interface {
 	/*
 	 A true will be pushed every time the sensor's state change
 	*/
-	notify.Nofifier
+	notification.Notifier
 }

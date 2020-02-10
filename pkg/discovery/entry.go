@@ -14,4 +14,10 @@ type Entry struct {
 	Id          string `json:"id"`
 }
 
+const (
+	Sensor = EntryType("sensor")
+	Detector = EntryType("detector")
+	Display = EntryType("display")
+)
+
 type EntryType string

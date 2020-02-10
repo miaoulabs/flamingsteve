@@ -1,7 +1,7 @@
 package ak9753
 
 import (
-	"flamingsteve/pkg/notify"
+	"flamingsteve/pkg/notification"
 	"sync"
 	"time"
 )
@@ -11,7 +11,7 @@ import (
 	and store it's data
 */
 type Reader struct {
-	notify.Notifier
+	notification.NotifierImpl
 
 	dev   *Physical
 	close chan bool

@@ -1,5 +1,9 @@
 package ak9753
 
+const (
+	ModelName = "ak9753"
+)
+
 type Cmd byte
 
 func (c Cmd) toBytes() []byte {

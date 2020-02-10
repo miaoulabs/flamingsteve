@@ -4,20 +4,20 @@ import (
 	"flamingsteve/pkg/ak9753"
 	"flamingsteve/pkg/discovery"
 	"flamingsteve/pkg/muthur"
-	"flamingsteve/pkg/notify"
+	"flamingsteve/pkg/notification"
 	"github.com/nats-io/nats.go"
 	"sync"
 )
 
-type Suscriber struct {
+type Subscriber struct {
 	sub   *nats.Subscription
 	state ak9753.State
 	mutex sync.RWMutex
-	notify.Notifier
+	notification.NotifierImpl
 }
 
-func NewSuscriber(entry *discovery.Entry) (*Suscriber, error) {
-	s := &Suscriber{}
+func NewSuscriber(entry *discovery.Entry) (*Subscriber, error) {
+	s := &Subscriber{}
 	var err error
 
 	if entry != nil {
@@ -27,20 +27,20 @@ func NewSuscriber(entry *discovery.Entry) (*Suscriber, error) {
 	return s, err
 }
 
-func (s *Suscriber) Close() {
-	log.Infof("closing suscriber")
+func (s *Subscriber) Close() {
+	log.Infof("closing subscriber")
 	s.sub.Unsubscribe()
 	s.UnsubscribeAll()
 }
 
-func (s *Suscriber) Change(entry discovery.Entry) error {
+func (s *Subscriber) Change(entry discovery.Entry) error {
 	s.sub.Unsubscribe()
 	var err error
 	s.sub, err = muthur.Connection().Subscribe(entry.DataTopic, s.update)
 	return err
 }
 
-func (s *Suscriber) update(state *ak9753.State) {
+func (s *Subscriber) update(state *ak9753.State) {
 	s.mutex.Lock()
 	haschanged := !s.state.Equal(*state)
 	s.state = *state
@@ -51,55 +51,55 @@ func (s *Suscriber) update(state *ak9753.State) {
 	}
 }
 
-func (s *Suscriber) DeviceId() (uint8, error) {
+func (s *Subscriber) DeviceId() (uint8, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.DeviceId, nil
 }
 
-func (s *Suscriber) CompagnyCode() (uint8, error) {
+func (s *Subscriber) CompagnyCode() (uint8, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.CompagnyCode, nil
 }
 
-func (s *Suscriber) IR(idx int) (float32, error) {
+func (s *Subscriber) IR(idx int) (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Irs()[idx], nil
 }
 
-func (s *Suscriber) IR1() (float32, error) {
+func (s *Subscriber) IR1() (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Ir1, nil
 }
 
-func (s *Suscriber) IR2() (float32, error) {
+func (s *Subscriber) IR2() (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Ir2, nil
 }
 
-func (s *Suscriber) IR3() (float32, error) {
+func (s *Subscriber) IR3() (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Ir3, nil
 }
 
-func (s *Suscriber) IR4() (float32, error) {
+func (s *Subscriber) IR4() (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Ir4, nil
 }
 
-func (s *Suscriber) Temperature() (float32, error) {
+func (s *Subscriber) Temperature() (float32, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state.Temperature, nil
 }
 
-func (s *Suscriber) All() ak9753.State {
+func (s *Subscriber) All() ak9753.State {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.state

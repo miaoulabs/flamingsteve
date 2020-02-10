@@ -1,6 +1,9 @@
 package main
 
 import (
+	"image"
+	"time"
+
 	"flamingsteve/pkg/ak9753"
 	"flamingsteve/pkg/ak9753/presence"
 	"flamingsteve/pkg/ak9753/remote"
@@ -9,20 +12,17 @@ import (
 	"github.com/aarzilli/nucular"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/draeron/gopkgs/logger"
-	"image"
-	"sort"
-	"sync"
-	"time"
 )
 
 var (
-	sensors sync.Map
+	sensors SensorsMap
 )
 
 const (
 	SensorWidth = 800
 	PropWidth   = 300
 )
+
 
 func main() {
 	log := logger.New("main")
@@ -33,15 +33,15 @@ func main() {
 
 	muthur.Connect("sensui")
 
-	u := &ui{
+	u := &gui{
 		//smoothing:        float64(detector.Options().Smoothing),
 		//presence:         int(detector.Options().PresenceThreshold),
-		log:              logger.New("ui"),
-		selectedSensorId: 0,
-		changed:          make(chan bool),
+		log:                 logger.New("gui"),
+		selectedSensorIndex: 0,
+		changed:             make(chan bool),
 	}
 
-	wnd := nucular.NewMasterWindowSize(nucular.WindowMovable|nucular.WindowClosable|nucular.WindowNoScrollbar, "sensor", image.Point{SensorWidth + PropWidth, SensorWidth}, u.renderUi)
+	wnd := nucular.NewMasterWindowSize(nucular.WindowClosable|nucular.WindowNoScrollbar, "sensor", image.Point{SensorWidth + PropWidth, SensorWidth}, u.renderUi)
 	wnd.SetStyle(nstyle.FromTheme(nstyle.DarkTheme, 1.0))
 	u.wnd = wnd
 
@@ -52,25 +52,42 @@ func main() {
 	//}()
 
 	scanner := discovery.NewScanner(
-		"sensor",
+		discovery.Sensor,
 		logger.New("scanner"),
 		func(entry discovery.Entry) {
-			sub, err := remote.NewSuscriber(&entry)
-			log.LogIfErr(err)
-			if sub != nil {
-				if _, present := sensors.Load(entry.Id); !present {
-					log.Infof("new sensor found: %s", entry.Id)
-					sensors.Store(entry.Id, sub)
-					if len(sensorsIds()) == 1 {
-						u.selectSensor(entry.Id)
-					}
-					wnd.Changed()
+			if sensor := sensors.Get(entry.Id); sensor == nil {
+				log.Infof("new sensor found: %s", entry.Id)
+
+				sub, err := remote.NewSuscriber(&entry)
+				log.LogIfErr(err)
+				if sub == nil {
+					return
+				}
+
+				detector, _ := presence.New(sub, nil)
+
+				dev, err := ak9753.NewMean(sub, detector.Options().Smoothing)
+				log.LogIfErr(err)
+
+				sensors.Set(entry.Id, Sensor{
+					Ident:    entry,
+					Device:   dev,
+					Detector: detector,
+				})
+
+				if u.selectedSensorIndex == 0 {
+					u.selectedSensorIndex = 1
+					u.selectSensor(entry.Id)
 				}
 			}
+			wnd.Changed()
 		},
 		func(entry discovery.Entry) {
 			log.Infof("removing sensor %s", entry.Id)
-			sensors.Delete(entry.Id)
+			if sensor := sensors.Get(entry.Id); sensor != nil {
+				sensor.Device.Close()
+				sensors.Delete(entry.Id)
+			}
 			wnd.Changed()
 		},
 	)
@@ -85,9 +102,6 @@ func main() {
 		}
 	}()
 
-	//dev, _ = ak9753.NewMean(dev, 5)
-	//defer dev.Close()
-	//
 	//detector = presence.New(dev, nil)
 	//defer detector.Close()
 
@@ -96,14 +110,4 @@ func main() {
 	wnd.Main()
 }
 
-func sensorsIds() []string {
-	ids := []string{}
 
-	sensors.Range(func(key, value interface{}) bool {
-		ids = append(ids, key.(string))
-		return true
-	})
-
-	sort.Strings(ids)
-	return ids
-}

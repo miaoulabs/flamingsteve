@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	tm "github.com/buger/goterm"
 	"time"
+
+	tm "github.com/buger/goterm"
 )
 
 type display struct {
@@ -53,25 +54,29 @@ func (d *display) textDisplay() {
 			center("IR3", width),
 			center("IR4", width),
 		)
-		tm.Printf("presence    | %s | %s | %s | %s |\n",
-			toXO(detector.PresentInField1()),
-			toXO(detector.PresentInField2()),
-			toXO(detector.PresentInField3()),
-			toXO(detector.PresentInField4()),
-		)
+
+		if detector != nil {
+			tm.Printf("presence    | %s | %s | %s | %s |\n",
+				toXO(detector.PresentInField1()),
+				toXO(detector.PresentInField2()),
+				toXO(detector.PresentInField3()),
+				toXO(detector.PresentInField4()),
+			)
+		}
+
+		ir1, _ := device.IR1()
+		ir2, _ := device.IR2()
+		ir3, _ := device.IR3()
+		ir4, _ := device.IR4()
 		tm.Printf("sensor      | %8.3f | %8.3f | %8.3f | %8.3f |\n",
-			detector.IR1(),
-			detector.IR2(),
-			detector.IR3(),
-			detector.IR4(),
+			ir1,
+			ir2,
+			ir3,
+			ir4,
 		)
-		tm.Printf("derivative  | %8.3f | %8.3f | %8.3f | %8.3f |\n",
-			detector.DerivativeOfIR1(),
-			detector.DerivativeOfIR2(),
-			detector.DerivativeOfIR3(),
-			detector.DerivativeOfIR4(),
-		)
-		tm.Printf("temperature | %8.2f C\n", detector.Temperature())
+
+		tmp, _ := device.Temperature()
+		tm.Printf("temperature | %8.2f C\n", tmp)
 		tm.Printf("elapsed     | %v\n", time.Now().Sub(start))
 		tm.Flush()
 	}

@@ -1,16 +1,17 @@
 package main
 
 import (
-	"flamingsteve/pkg/muthur"
 	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
 	"flamingsteve/pkg/ak9753"
-	"flamingsteve/pkg/ak9753/presence"
+	ak9753presence "flamingsteve/pkg/ak9753/presence"
 	"flamingsteve/pkg/ak9753/remote"
 	"flamingsteve/pkg/discovery"
+	"flamingsteve/pkg/muthur"
+	"flamingsteve/pkg/presence"
 
 	"github.com/draeron/gopkgs/logger"
 	"github.com/spf13/pflag"
@@ -32,7 +33,7 @@ func init() {
 	pflag.Float32VarP(&args.threshold, "threshold", "t", 100, "presence threshold")
 	pflag.IntVar(&args.mean, "mean", 6, "number of sample to use for mean")
 	pflag.DurationVarP(&args.interval, "interval", "i", time.Millisecond*30, "interval for presence evaluation")
-	pflag.BoolVarP(&args.presence, "presence", "p", true, "test for presence")
+	pflag.BoolVar(&args.presence, "no-presence", false, "disable presence detector")
 
 	pflag.BoolVar(&args.ui, "ui", false, "display real time information on the terminal")
 	pflag.BoolVar(&args.orphan, "orphan", false, "don't try to connect to muthur")
@@ -43,7 +44,10 @@ func hostInit() (*periph.State, error) {
 	return host.Init()
 }
 
-var detector *presence.Detector
+var (
+	detector *ak9753presence.Detector
+	device ak9753.Device
+)
 
 func main() {
 	pflag.Parse()
@@ -51,10 +55,10 @@ func main() {
 	presence.SetLogger(logger.New("detector"))
 	remote.SetLogger(logger.New("remote"))
 	ak9753.SetLogger(logger.New("ak9753"))
+	ak9753presence.SetLogger(logger.New("ak9753-detector"))
 	muthur.SetLogger(logger.New("muthur"))
 
 	var err error
-	var device ak9753.Device
 
 	state, err := hostInit()
 	log.StopIfErr(err)
@@ -90,9 +94,9 @@ func main() {
 
 		ident := discovery.NewIdentifier(discovery.IdentifierConfig{
 			Name:  "protopi",
-			Model: "ak9753",
-			Type:  "sensor",
-		}, logger.New("identifier"))
+			Model: ak9753.ModelName,
+			Type:  discovery.Sensor,
+		}, logger.New("sensor-ident"))
 
 		muthur.Connect(ident.Id())
 		ident.Connect()
@@ -105,13 +109,20 @@ func main() {
 	}
 	defer device.Close()
 
-	if args.presence {
-		//detector = presence.New(device, &presence.Options{
-		//	Interval:          args.interval,
-		//	PresenceThreshold: args.threshold,
-		//	Smoothing:         args.mean,
-		//})
-		//defer detector.Close()
+	if !args.presence {
+		log.Infof("creating presence detector")
+
+		detectorIdent := discovery.NewIdentifier(discovery.IdentifierConfig{
+			Name:  "protopi",
+			Type: discovery.Detector,
+			Model: ak9753.ModelName,
+		}, logger.New("detector-ident"))
+
+		detector, err = ak9753presence.New(device, nil)
+		log.StopIfErr(err)
+
+		pub := presence.NewPublisher(detector, detectorIdent)
+		defer pub.Close()
 	}
 
 	if args.ui {

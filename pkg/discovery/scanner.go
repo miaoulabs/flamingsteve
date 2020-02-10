@@ -10,7 +10,7 @@ import (
 type Scanner struct {
 	subOn  *nats.Subscription
 	subOff *nats.Subscription
-	log     logger.Logger
+	log    logger.Logger
 }
 
 type OnHandler func(entry Entry)
