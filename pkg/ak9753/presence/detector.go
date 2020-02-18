@@ -58,7 +58,6 @@ func (d *Detector) Options() Options {
 	return d.opts
 }
 
-
 func (d *Detector) Configs() []byte {
 	return d.opts.Marshal()
 }
@@ -72,6 +71,7 @@ func (d *Detector) ApplyOptions(opts Options) {
 
 	if opts.MinimumSensors <= 0 {
 		// todo: log warning about invalid sensor count
+		log.Warnf("invalid sensor count: %d", opts.MinimumSensors)
 		opts.MinimumSensors = 1
 	}
 

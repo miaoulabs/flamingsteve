@@ -7,27 +7,29 @@ import (
 
 type Publisher struct {
 	notification.NotifierImpl
-	detector Detector
-	ident *discovery.Component
-	changed chan bool
+	detector  Detector
+	component *discovery.Component
+	changed   chan bool
 }
 
 func (p *Publisher) Configs() []byte {
-	panic("implement me")
+	return p.detector.Configs()
 }
 
 func (p *Publisher) SetConfigs(data []byte) {
-	panic("implement me")
+	p.detector.SetConfigs(data)
 }
 
-func NewPublisher(detector Detector, ident *discovery.Component) *Publisher {
+func NewPublisher(detector Detector, component *discovery.Component) *Publisher {
 	p := &Publisher{
-		detector: detector,
-		ident: ident,
-		changed: make(chan bool),
+		detector:  detector,
+		component: component,
+		changed:   make(chan bool),
 	}
 
-	ident.Connect()
+	component.Connect()
+	component.OnConfigWrite(p.SetConfigs)
+	component.OnConfigRequest(p.Configs)
 
 	go p.run()
 	return p
@@ -51,7 +53,7 @@ func (p *Publisher) run() {
 	for range p.changed {
 
 		// todo: add log
-		err := p.ident.PushData(&DetectorState{
+		err := p.component.PushData(&DetectorState{
 			Present: p.IsPresent(),
 		})
 		if err != nil {

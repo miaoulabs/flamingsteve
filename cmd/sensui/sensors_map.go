@@ -1,12 +1,13 @@
 package main
 
 import (
-	"flamingsteve/pkg/presence"
 	"sort"
 	"sync"
 
 	"flamingsteve/pkg/ak9753"
+	ak_presence "flamingsteve/pkg/ak9753/presence"
 	"flamingsteve/pkg/discovery"
+	"flamingsteve/pkg/presence"
 )
 
 type SensorsMap struct {
@@ -14,9 +15,10 @@ type SensorsMap struct {
 }
 
 type Sensor struct {
-	Ident    discovery.Entry
-	Device   ak9753.Device
-	Detector presence.Detector
+	Ident          discovery.Entry
+	Device         ak9753.Device
+	LocalDetector  *ak_presence.Detector
+	RemoteDetector presence.Detector
 }
 
 func (s *SensorsMap) Get(id string) *Sensor {

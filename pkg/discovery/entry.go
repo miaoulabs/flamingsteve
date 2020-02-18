@@ -1,6 +1,10 @@
 package discovery
 
-import "net"
+import (
+	"flamingsteve/pkg/muthur"
+	"net"
+	"time"
+)
 
 type Entry struct {
 	Type     EntryType `json:"type"` // sensor, display, detector
@@ -21,3 +25,15 @@ const (
 )
 
 type EntryType string
+
+func (e *Entry) FetchConfig() ([]byte, error) {
+	resp, err := muthur.Connection().Request(e.ConfigTopic, []byte{}, time.Millisecond*500)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, err
+}
+
+func (e *Entry) PushConfig(data []byte) error {
+	return muthur.EncodedConnection().Publish(e.ConfigTopic, data)
+}

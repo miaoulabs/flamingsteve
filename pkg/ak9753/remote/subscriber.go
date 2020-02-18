@@ -16,14 +16,10 @@ type Subscriber struct {
 	notification.NotifierImpl
 }
 
-func NewSuscriber(entry *discovery.Entry) (*Subscriber, error) {
+func NewSuscriber(entry discovery.Entry) (*Subscriber, error) {
 	s := &Subscriber{}
 	var err error
-
-	if entry != nil {
-		err = s.Change(*entry)
-	}
-
+	err = s.Change(entry)
 	return s, err
 }
 
@@ -36,7 +32,7 @@ func (s *Subscriber) Close() {
 func (s *Subscriber) Change(entry discovery.Entry) error {
 	s.sub.Unsubscribe()
 	var err error
-	s.sub, err = muthur.Connection().Subscribe(entry.DataTopic, s.update)
+	s.sub, err = muthur.EncodedConnection().Subscribe(entry.DataTopic, s.update)
 	return err
 }
 

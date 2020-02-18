@@ -16,13 +16,9 @@ type Scanner struct {
 type OnHandler func(entry Entry)
 type OffHandler func(entry Entry)
 
-func NewScanner(etype EntryType, log logger.Logger, on OnHandler, off OffHandler) *Scanner {
+func NewScanner(etype EntryType, on OnHandler, off OffHandler) *Scanner {
 	s := &Scanner{
-		log: logger.Dummy(),
-	}
-
-	if log != nil {
-		s.log = log
+		log: logFactory("scanner-" + string(etype)),
 	}
 
 	s.log.Infof("starting discovery for %s", etype)
@@ -30,13 +26,13 @@ func NewScanner(etype EntryType, log logger.Logger, on OnHandler, off OffHandler
 	if on != nil {
 		topic := fmt.Sprintf("%s.%s.>", TopicDeviceOn, etype)
 		s.log.Infof("listening for topic '%s'", topic)
-		s.subOn, _ = muthur.Connection().Subscribe(topic, on)
+		s.subOn, _ = muthur.EncodedConnection().Subscribe(topic, on)
 	}
 
 	if off != nil {
 		topic := fmt.Sprintf("%s.%s.>", TopicDeviceOff, etype)
 		s.log.Infof("listening for topic '%s'", topic)
-		s.subOff, _ = muthur.Connection().Subscribe(topic, off)
+		s.subOff, _ = muthur.EncodedConnection().Subscribe(topic, off)
 	}
 
 	return s

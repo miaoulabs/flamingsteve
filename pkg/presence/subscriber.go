@@ -14,17 +14,23 @@ type Subscriber struct {
 	sub   *nats.Subscription
 	present bool
 	sync.RWMutex
+
+	entry discovery.Entry
+
+	config []byte
 }
 
-func NewSubscriber(entry *discovery.Entry) (*Subscriber, error) {
-	s := &Subscriber{}
+func NewSubscriber(entry discovery.Entry) (*Subscriber, error) {
+	s := &Subscriber{
+		entry: entry,
+	}
 
 	if entry.Type != discovery.Detector {
 		return nil, fmt.Errorf("wrong type of entry: expecting %s, has %d", discovery.Detector, entry.Type)
 	}
 
 	var err error
-	s.sub, err = muthur.Connection().Subscribe(entry.DataTopic, s.update)
+	s.sub, err = muthur.EncodedConnection().Subscribe(entry.DataTopic, s.update)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +39,7 @@ func NewSubscriber(entry *discovery.Entry) (*Subscriber, error) {
 }
 
 func (s *Subscriber) Close() {
-	s.sub.Unsubscribe()
+	_ = s.sub.Unsubscribe()
 }
 
 func (s *Subscriber) IsPresent() bool {
@@ -43,11 +49,18 @@ func (s *Subscriber) IsPresent() bool {
 }
 
 func (s *Subscriber) Configs() []byte {
-	panic("implement me")
+	data, err := s.entry.FetchConfig()
+	if err != nil {
+		log.Errorf("failed to fetch config from %s: %v", s.entry.Name, err)
+	}
+	return data
 }
 
 func (s *Subscriber) SetConfigs(data []byte) {
-	panic("implement me")
+	err := s.entry.PushConfig(data)
+	if err != nil {
+		log.Errorf("failed to push config to %v: %v", s.entry.Name, err)
+	}
 }
 
 func (s *Subscriber) update(state *DetectorState) {

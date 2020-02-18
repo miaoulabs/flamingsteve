@@ -13,8 +13,8 @@
 - [x] Sensor UI: display of sensor data
 - [x] Sensor UI: auto add/remove sensors
 - [ ] Sensor UI: Remote configuration
-- [ ] Sensor UI: Generic configs ui
-- [ ] Display: simulator
+- [x] Sensor UI: Generic configs ui
+- [x] Display: simulator
 - [ ] Display: flame panel
 - [ ] muthur: JSON-RPC for react based frontend 
 - [ ] Seq: simple display sequencer
@@ -42,7 +42,7 @@ Connects to muthur ([nats server](https://docs.nats.io/), display sensor data an
 
 Simulate one or more sensors.
 
-## `cmd/muthur`
+## MUTHUR: `cmd/muthur`
 
 Central service to be used for service (dis/re)covery. Also will tell you human are 
 expendable if a xenomorph is present on your spaceship. 

@@ -34,13 +34,19 @@ func Connect(clientName string) {
 	})
 }
 
-func Connection() *nats.EncodedConn {
+func EncodedConnection() *nats.EncodedConn {
 	if natsConn == nil {
 		panic("muthur.Connect() has not been called")
 	}
 	return natsEnc
 }
 
+func Connection() *nats.Conn {
+	if natsConn == nil {
+		panic("muthur.Connect() has not been called")
+	}
+	return natsConn
+}
 func Close() {
 	natsEnc.Close()
 }

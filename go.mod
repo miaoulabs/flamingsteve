@@ -6,7 +6,9 @@ require (
 	github.com/aarzilli/nucular v0.0.0-20191227141642-cca133278403
 	github.com/blend/go-sdk v2.0.0+incompatible // indirect
 	github.com/buger/goterm v0.0.0-20181115115552-c206103e1f37
+	github.com/draeron/golaunchpad v0.2.1
 	github.com/draeron/gopkgs v0.1.2
+	github.com/fogleman/gg v1.3.0
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/json-iterator/go v1.1.9
@@ -19,3 +21,5 @@ require (
 	gonum.org/v1/gonum v0.6.2
 	periph.io/x/periph v3.6.2+incompatible
 )
+
+replace github.com/draeron/gopkgs => ../gopkg

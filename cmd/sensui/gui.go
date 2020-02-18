@@ -1,13 +1,13 @@
 package main
 
 import (
-	"flamingsteve/pkg/ak9753/presence"
 	"fmt"
 	"image"
 	"sync"
 	"time"
 
 	"flamingsteve/pkg/ak9753"
+	"flamingsteve/pkg/ak9753/presence"
 	"github.com/aarzilli/nucular"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/draeron/gopkgs/logger"
@@ -16,17 +16,16 @@ import (
 )
 
 type gui struct {
-	smoothing float64
-	presence  int
-	base      float64
 	ir        [ak9753.FieldCount][]float64
 	irTime    [ak9753.FieldCount][]time.Time
 	log       *logger.SugaredLogger
 	changed   chan bool
-	dev       ak9753.Device
 	wnd       nucular.MasterWindow
 
 	selectedSensorIndex int
+	currentSensor *Sensor
+
+	options presence.Options
 
 	sync.RWMutex
 }
@@ -50,7 +49,7 @@ func (u *gui) updateSensorData() {
 				u.ir[i] = u.ir[i][1:]
 				u.irTime[i] = u.irTime[i][1:]
 			}
-			ir, _ := u.dev.IR(i)
+			ir, _ := u.currentSensor.Device.IR(i)
 			u.ir[i] = append(u.ir[i], float64(ir))
 			u.irTime[i] = append(u.irTime[i], time.Now())
 
@@ -88,14 +87,13 @@ func (ui *gui) renderUi(w *nucular.Window) {
 func (ui *gui) selectSensor(id string) {
 	if sensor := sensors.Get(id); sensor != nil {
 		ui.Lock()
-		if ui.dev != nil {
-			ui.dev.Unsubscribe(ui.changed)
+		if ui.currentSensor != nil {
+			ui.currentSensor.Device.Unsubscribe(ui.changed)
 		}
 
-		if sensor != nil {
-			sensor.Device.Subscribe(ui.changed)
-			ui.dev = sensor.Device
-		}
+		sensor.Device.Subscribe(ui.changed)
+		ui.currentSensor = sensor
+		ui.options = presence.UnmarshalOptions(sensor.LocalDetector.Configs())
 		ui.Unlock()
 	}
 }
@@ -114,15 +112,9 @@ func (ui *gui) renderSensors(w *nucular.Window) {
 }
 
 func (ui *gui) renderProps(w *nucular.Window) {
-	//double := func() {
-	//	w.Row(Height).Dynamic(2)
-	//}
-	single := func() {
-		w.Row(Height).Dynamic(1)
-	}
 
 	sensorIds := append([]string{"none"}, sensors.Keys()...)
-	single()
+	w.Row(Height).Dynamic(1)
 
 	oldSelected := ui.selectedSensorIndex
 	ui.selectedSensorIndex = w.ComboSimple(sensorIds, ui.selectedSensorIndex, Height)
@@ -146,7 +138,7 @@ func (ui *gui) renderProps(w *nucular.Window) {
 	w.Spacing(1)
 	w.Row(Height * 4 + padding).Dynamic(1)
 	if p := w.GroupBegin("Properties", WidgetFlags | nucular.WindowBorder); p != nil {
-		ui.renderAk9753SensorData(p, *sensor)
+		ui.renderAk9753SensorData(p)
 		p.GroupEnd()
 	}
 
@@ -155,7 +147,7 @@ func (ui *gui) renderProps(w *nucular.Window) {
 
 	w.Row(Height * 6 + padding).Dynamic(1)
 	if p := w.GroupBegin("Properties", WidgetFlags| nucular.WindowBorder); p != nil {
-		ui.renderAk9753Detector(p, *sensor)
+		ui.renderAk9753Detector(p)
 		p.GroupEnd()
 	}
 }
@@ -194,13 +186,9 @@ func (ui *gui) drawSensor(w *nucular.Window, idx int) {
 
 		bgcol := drawing.ColorBlue
 
-		if ir[len(ir)-1] > ui.base {
+		if ir[len(ir)-1] > float64(ui.options.Threshold) {
 			bgcol = drawing.ColorRed
 		}
-
-		//if detector.PresentInField(idx) {
-		//	bgcol = drawing.ColorRed
-		//}
 
 		graph := &chart.Chart{
 			Width:  bounds.W,
@@ -221,12 +209,20 @@ func (ui *gui) drawSensor(w *nucular.Window, idx int) {
 			},
 			YAxis: chart.YAxis{
 				Ascending: true,
-				Zero: chart.GridLine{
-					Value: 0,
-					Style: chart.Style{
-						Show:            true,
-						StrokeColor:     chart.ColorAlternateGray,
-						StrokeDashArray: []float64{5.0, 5.0},
+				Style: chart.Style{
+					Show: true,
+					StrokeColor: chart.ColorTransparent,
+					FontColor: chart.ColorTransparent,
+				},
+				GridMajorStyle: chart.Style{
+					Show:            true,
+					StrokeColor:     chart.ColorWhite,
+					StrokeDashArray: []float64{5.0, 5.0},
+					StrokeWidth: 1,
+				},
+				GridLines: []chart.GridLine{
+					{
+						Value:   float64(ui.options.Threshold),
 					},
 				},
 				Range: &chart.ContinuousRange{
@@ -253,57 +249,55 @@ func (ui *gui) drawSensor(w *nucular.Window, idx int) {
 	}
 }
 
-func (ui *gui) renderAk9753SensorData(p *nucular.Window, sensor Sensor) {
+func (ui *gui) renderAk9753SensorData(p *nucular.Window) {
 	p.Row(Height).Dynamic(2)
 
 	p.Label("Sensor Info", LeftCenter)
 	p.Spacing(1)
 
 	p.Label("Model: ", LeftCenter)
-	p.Label(sensor.Ident.Model, LeftCenter)
+	p.Label(ui.currentSensor.Ident.Model, LeftCenter)
 
 	p.Label("Hostname: ", LeftCenter)
-	p.Label(sensor.Ident.Hostname, LeftCenter)
+	p.Label(ui.currentSensor.Ident.Hostname, LeftCenter)
 
 	p.Label("IP: ", LeftCenter)
-	p.Label(sensor.Ident.IP.String(), LeftCenter)
+	p.Label(ui.currentSensor.Ident.IP.String(), LeftCenter)
 }
 
-func (ui *gui) renderAk9753Detector(p *nucular.Window, sensor Sensor) {
-	options := presence.UnmarshalOptions(sensor.Detector.Configs())
+func (ui *gui) renderAk9753Detector(p *nucular.Window) {
 	updated := false
 
-
 	p.Row(Height).Dynamic(1)
-	p.Label("Presence Detector", LeftCenter)
+	p.Label("Presence LocalDetector", LeftCenter)
 
 	p.Row(Height).Dynamic(2)
-	p.Label(fmt.Sprintf("Min Sensors: %d", options.MinimumSensors), LeftCenter)
-	updated = p.SliderInt(1, &options.MinimumSensors, ak9753.FieldCount, 1)
+	p.Label(fmt.Sprintf("Min Sensors: %d", ui.options.MinimumSensors), LeftCenter)
+	updated = p.SliderInt(1, &ui.options.MinimumSensors, ak9753.FieldCount, 1)
 
-	thresh := int(options.Threshold)
+	thresh := int(ui.options.Threshold)
 	p.Label(fmt.Sprintf("Threshold: %d", thresh), LeftCenter)
-	updated = updated || p.SliderInt(-500, &thresh, 2000, 10)
+	updated = updated || p.SliderInt(-500, &thresh, 2000, 5)
 
-	delay := int(options.Delay / time.Millisecond)
+	delay := int(ui.options.Delay / time.Millisecond)
 	p.Label(fmt.Sprintf("Delay: %d ms", delay), LeftCenter)
-	updated = updated || p.SliderInt(10, &delay, 4000, 10)
+	updated = updated || p.SliderInt(10, &delay, 4000, 5)
 
-	p.Label(fmt.Sprintf("Smoothing: %d", options.Smoothing), LeftCenter)
-	updated = updated || p.SliderInt(2, &options.Smoothing, 20, 1)
+	p.Label(fmt.Sprintf("Smoothing: %d", ui.options.Smoothing), LeftCenter)
+	updated = updated || p.SliderInt(2, &ui.options.Smoothing, 20, 1)
 
 	if updated {
-		options.Threshold = float32(thresh)
-		options.Delay = time.Duration(delay) * time.Millisecond
-		sensor.Detector.SetConfigs(options.Marshal())
+		ui.options.Threshold = float32(thresh)
+		ui.options.Delay = time.Duration(delay) * time.Millisecond
+		ui.currentSensor.LocalDetector.SetConfigs(ui.options.Marshal())
 
-		if mean, ok := sensor.Device.(*ak9753.Mean); ok {
-			mean.SetSampleCount(options.Smoothing)
+		if mean, ok := ui.currentSensor.Device.(*ak9753.Mean); ok {
+			mean.SetSampleCount(ui.options.Smoothing)
 		}
 	}
 
 	p.Row(Height).Dynamic(1)
 	if p.ButtonText("Send Config") {
-		// todo: send the new config to the sensor
+		ui.currentSensor.RemoteDetector.SetConfigs(ui.options.Marshal())
 	}
 }

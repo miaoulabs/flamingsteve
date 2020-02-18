@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal"
+	"flamingsteve/cmd"
+	logger2 "flamingsteve/pkg/logger"
 	"time"
 
 	"flamingsteve/pkg/ak9753"
@@ -52,11 +51,6 @@ var (
 func main() {
 	pflag.Parse()
 	log := logger.New("main")
-	presence.SetLogger(logger.New("detector"))
-	remote.SetLogger(logger.New("remote"))
-	ak9753.SetLogger(logger.New("ak9753"))
-	ak9753presence.SetLogger(logger.New("ak9753-detector"))
-	muthur.SetLogger(logger.New("muthur"))
 
 	var err error
 
@@ -92,11 +86,11 @@ func main() {
 	if !args.orphan {
 		log.Infof("adoption mode enabled, scanning for muthur")
 
-		ident := discovery.NewIdentifier(discovery.IdentifierConfig{
+		ident := discovery.NewComponent(discovery.IdentifierConfig{
 			Name:  "protopi",
 			Model: ak9753.ModelName,
 			Type:  discovery.Sensor,
-		}, logger.New("sensor-ident"))
+		})
 
 		muthur.Connect(ident.Id())
 		ident.Connect()
@@ -112,11 +106,11 @@ func main() {
 	if !args.presence {
 		log.Infof("creating presence detector")
 
-		detectorIdent := discovery.NewIdentifier(discovery.IdentifierConfig{
+		detectorIdent := discovery.NewComponent(discovery.IdentifierConfig{
 			Name:  "protopi",
 			Type: discovery.Detector,
 			Model: ak9753.ModelName,
-		}, logger.New("detector-ident"))
+		})
 
 		detector, err = ak9753presence.New(device, nil)
 		log.StopIfErr(err)
@@ -131,22 +125,9 @@ func main() {
 		defer d.close()
 	}
 
-	waitForTerm()
+	cmd.WaitForCtrlC()
 }
 
-func waitForTerm() {
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	signal.Notify(sigs)
-
-	go func() {
-		sig := <-sigs
-		fmt.Println()
-		fmt.Println(sig)
-		done <- true
-	}()
-
-	<-done
-
-	println("stopping application")
+func newLogger(name string) logger2.Logger {
+	return logger.New(name)
 }
