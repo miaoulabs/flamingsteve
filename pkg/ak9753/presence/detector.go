@@ -76,10 +76,11 @@ func (d *Detector) ApplyOptions(opts Options) {
 	}
 
 	d.mean.SetSampleCount(opts.MinimumSensors)
-
 	d.mutex.Lock()
 	d.opts = opts
 	d.mutex.Unlock()
+
+	log.Infof("updating configs: %v", opts)
 }
 
 func (d *Detector) IsPresent() bool {
@@ -128,9 +129,11 @@ func (d *Detector) PresentInField4() bool {
 func (d *Detector) run() {
 	d.dev.Subscribe(d.changed)
 
-	for range d.changed {
-		d.mutex.Lock()
+	present := false
 
+	for range d.changed {
+
+		d.mutex.Lock()
 		for idx := range d.since {
 			val, _ := d.mean.IR(idx)
 
@@ -143,7 +146,12 @@ func (d *Detector) run() {
 				d.since[idx] = nil
 			}
 		}
-
 		d.mutex.Unlock()
+
+		if d.IsPresent() != present {
+			present = d.IsPresent()
+			log.Infof("presence changed: %v", present)
+			d.Notify()
+		}
 	}
 }

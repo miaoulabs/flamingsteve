@@ -6,23 +6,23 @@ import (
 	"flamingsteve/pkg/notification"
 	"fmt"
 	"github.com/nats-io/nats.go"
+	"go.uber.org/atomic"
 	"sync"
 )
 
 type Subscriber struct {
 	notification.NotifierImpl
 	sub   *nats.Subscription
-	present bool
+	present *atomic.Bool
 	sync.RWMutex
 
 	entry discovery.Entry
-
-	config []byte
 }
 
 func NewSubscriber(entry discovery.Entry) (*Subscriber, error) {
 	s := &Subscriber{
 		entry: entry,
+		present: atomic.NewBool(false),
 	}
 
 	if entry.Type != discovery.Detector {
@@ -43,9 +43,7 @@ func (s *Subscriber) Close() {
 }
 
 func (s *Subscriber) IsPresent() bool {
-	s.RLock()
-	defer s.RUnlock()
-	return s.present
+	return s.present.Load()
 }
 
 func (s *Subscriber) Configs() []byte {
@@ -66,9 +64,9 @@ func (s *Subscriber) SetConfigs(data []byte) {
 func (s *Subscriber) update(state *DetectorState) {
 	s.Lock()
 	defer s.Unlock()
-	if s.present != state.Present {
+	if s.present.Load() != state.Present {
 		log.Infof("remote detector state changed: %v", state.Present)
-		s.present = state.Present
+		s.present.Store(state.Present)
 		s.Notify()
 	}
 }

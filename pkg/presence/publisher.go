@@ -52,7 +52,8 @@ func (p *Publisher) run() {
 
 	for range p.changed {
 
-		// todo: add log
+		log.Infof("detection changed: %v", p.IsPresent())
+
 		err := p.component.PushData(&DetectorState{
 			Present: p.IsPresent(),
 		})

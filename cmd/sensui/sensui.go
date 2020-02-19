@@ -1,7 +1,7 @@
 package main
 
 import (
-	logger2 "flamingsteve/pkg/logger"
+	"flamingsteve/cmd"
 	"image"
 	"time"
 
@@ -10,7 +10,6 @@ import (
 	"flamingsteve/pkg/ak9753/remote"
 	"flamingsteve/pkg/discovery"
 	"flamingsteve/pkg/muthur"
-	"flamingsteve/pkg/presence"
 	"github.com/aarzilli/nucular"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/draeron/gopkgs/logger"
@@ -26,11 +25,8 @@ const (
 )
 
 func main() {
+	cmd.SetupLoggers()
 	log := logger.New("main")
-	presence.SetLoggerFactory(newLogger)
-	remote.SetLoggerFactory(newLogger)
-	ak9753.SetLoggerFactory(newLogger)
-	muthur.SetLoggerFactory(newLogger)
 
 	muthur.Connect("sensui")
 
@@ -128,8 +124,4 @@ func onNewSensor(log *logger.SugaredLogger, u *gui, wnd nucular.MasterWindow) fu
 		}
 		wnd.Changed()
 	}
-}
-
-func newLogger(name string) logger2.Logger {
-	return logger.New(name)
 }

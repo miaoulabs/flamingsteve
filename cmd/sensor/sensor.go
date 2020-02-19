@@ -20,19 +20,19 @@ import (
 )
 
 var args = struct {
-	threshold float32
-	interval  time.Duration
-	presence  bool
-	ui        bool
-	orphan    bool
-	mean      int
+	threshold  float32
+	interval   time.Duration
+	noPresence bool
+	ui         bool
+	orphan     bool
+	mean       int
 }{}
 
 func init() {
 	pflag.Float32VarP(&args.threshold, "threshold", "t", 100, "presence threshold")
 	pflag.IntVar(&args.mean, "mean", 6, "number of sample to use for mean")
 	pflag.DurationVarP(&args.interval, "interval", "i", time.Millisecond*30, "interval for presence evaluation")
-	pflag.BoolVar(&args.presence, "no-presence", false, "disable presence detector")
+	pflag.BoolVar(&args.noPresence, "no-presence", false, "disable presence detector")
 
 	pflag.BoolVar(&args.ui, "ui", false, "display real time information on the terminal")
 	pflag.BoolVar(&args.orphan, "orphan", false, "don't try to connect to muthur")
@@ -50,6 +50,7 @@ var (
 
 func main() {
 	pflag.Parse()
+	cmd.SetupLoggers()
 	log := logger.New("main")
 
 	var err error
@@ -103,7 +104,7 @@ func main() {
 	}
 	defer device.Close()
 
-	if !args.presence {
+	if !args.noPresence {
 		log.Infof("creating presence detector")
 
 		detectorIdent := discovery.NewComponent(discovery.IdentifierConfig{

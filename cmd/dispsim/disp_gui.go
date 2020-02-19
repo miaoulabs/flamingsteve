@@ -97,7 +97,7 @@ func (g *Gui) render(mw *nucular.Window) {
 		ctx.Fill()
 
 		ctx.SetColor(color.White)
-		ctx.DrawString(strconv.Itoa(idx), PixelEdgeDimension/2, PixelEdgeDimension/2)
+		ctx.DrawStringAnchored(strconv.Itoa(idx+1), PixelEdgeDimension/2, PixelEdgeDimension/2, 0.5, 0.5)
 
 		mw.Image(img)
 	}

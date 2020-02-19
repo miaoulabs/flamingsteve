@@ -186,7 +186,7 @@ func (ui *gui) drawSensor(w *nucular.Window, idx int) {
 
 		bgcol := drawing.ColorBlue
 
-		if ir[len(ir)-1] > float64(ui.options.Threshold) {
+		if ui.currentSensor.LocalDetector.PresentInField(idx) {
 			bgcol = drawing.ColorRed
 		}
 
@@ -298,6 +298,8 @@ func (ui *gui) renderAk9753Detector(p *nucular.Window) {
 
 	p.Row(Height).Dynamic(1)
 	if p.ButtonText("Send Config") {
-		ui.currentSensor.RemoteDetector.SetConfigs(ui.options.Marshal())
+		if ui.currentSensor.RemoteDetector != nil {
+			ui.currentSensor.RemoteDetector.SetConfigs(ui.options.Marshal())
+		}
 	}
 }

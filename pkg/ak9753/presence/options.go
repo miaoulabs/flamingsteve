@@ -1,6 +1,7 @@
 package presence
 
 import (
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"time"
 )
@@ -32,4 +33,10 @@ func UnmarshalOptions(bytes []byte) Options {
 func (o Options) Marshal() []byte {
 	bytes, _ := jsoniter.Marshal(&o)
 	return bytes
+}
+
+func (o Options) String() string {
+	return fmt.Sprintf("Delay: %v, Smoothing: %v, Sensor Count: %v, Threshold: %v",
+		o.Delay, o.Smoothing, o.MinimumSensors, o.Threshold,
+	)
 }
