@@ -1,0 +1,33 @@
+version: '3.7'
+
+networks:
+  fpixels: {}
+
+services:
+  muthur:
+    build:
+      context: .
+    ports:
+      - 5353:5353
+      - 4222:4222
+      - 8222:8222
+    networks:
+      - fpixels
+
+  sensors-ak9753:
+    build:
+      context: .
+    args:
+      - --type
+      - ak9753
+    networks:
+      - fpixels
+
+  sensors-amg8833:
+    build:
+      context: .
+    args:
+      - --type
+      - amg8833
+    networks:
+      - fpixels

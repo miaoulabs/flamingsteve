@@ -19,9 +19,9 @@ type Entry struct {
 }
 
 const (
-	Sensor = EntryType("sensor")
+	Sensor   = EntryType("sensor")
 	Detector = EntryType("detector")
-	Display = EntryType("display")
+	Display  = EntryType("display")
 )
 
 type EntryType string

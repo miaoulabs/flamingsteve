@@ -1,0 +1,58 @@
+version: '3.7'
+
+networks:
+  fpixels: {}
+  external:
+    driver: overlay
+
+services:
+  muthur:
+    build:
+      context: .
+    image: fpixel:compose
+    restart: always
+    entrypoint: /muthur
+    ports:
+      - 5353:5353/udp
+      - 4222:4222
+      - 8222:8222
+    network_mode: "host"
+
+  display:
+    image: fpixel:compose
+    depends_on:
+      - muthur
+    restart: always
+    privileged: true
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+    entrypoint: /dispmatrix
+    network_mode: "host"
+
+  sensors-ak9753:
+    image: fpixel:compose
+    depends_on:
+      - muthur
+    restart: always
+    privileged: true
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+    entrypoint: /sensor
+    command:
+      - --type
+      - ak9753
+    network_mode: "host"
+
+  sensors-amg8833:
+    image: fpixel:compose
+    depends_on:
+      - muthur
+    restart: always
+    privileged: true
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+    entrypoint: /sensor
+    command:
+      - --type
+      - amg8833
+    network_mode: "host"

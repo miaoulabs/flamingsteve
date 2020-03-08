@@ -1,0 +1,59 @@
+package amg8833
+
+const (
+	ModelName = "amg8833"
+
+	PIXEL_COUNT = 64
+	ROW_COUNT   = 8
+
+	I2C_DEFAULT_ADDRESS = 0x68
+
+	DEFAULT_UPPER_LIMIT = 0x8000 /*32°C，calculate method：u16 value,last bit0~bit1*0.25,bit2~bit10 /4,bit11 is sign bit,1 is negative.*/
+	DEFAULT_LOWER_LIMIT = 0x0100 /*0.25°C*/
+	DEFAULT_HYSTERESIS  = 0x0800 /*2°C,When temperature lower than (high_limit-hysteresis)(30-2=28℃),INT pin back to origin status. */
+
+	FPS_10 = 0x00
+	FPS_1  = 0x01
+
+	POWER_CONTROL_REG_ADDR         = 0x00
+	RESET_REG_ADDR                 = 0x01
+	FRAME_RATE_ADDR                = 0x02
+	INTERRUPT_CONTROL_REG_ADDR     = 0x03
+	STATUS_REG_ADDR                = 0x04
+	STATUS_CLEAR_REG_ADDR          = 0x05
+	AVERAGE_REG_ADDR               = 0x07
+	INT_LEVEL_REG_ADDR_HL          = 0x08
+	INT_LEVEL_REG_ADDR_HH          = 0x09
+	INT_LEVEL_REG_ADDR_LL          = 0x0A
+	INT_LEVEL_REG_ADDR_LH          = 0x0B
+	INT_LEVEL_REG_ADDR_YSL         = 0x0C
+	INT_LEVEL_REG_ADDR_YSH         = 0x0D
+	THERMISTOR_REG_ADDR_L          = 0x0E
+	THERMISTOR_REG_ADDR_H          = 0x0F
+	INTERRUPT_TABLE_1_8_REG_ADDR   = 0x10
+	INTERRUPT_TABLE_9_16_REG_ADDR  = 0x11
+	INTERRUPT_TABLE_17_24_REG_ADDR = 0x12
+	INTERRUPT_TABLE_25_32_REG_ADDR = 0x13
+	INTERRUPT_TABLE_33_40_REG_ADDR = 0x14
+	INTERRUPT_TABLE_41_48_REG_ADDR = 0x15
+	INTERRUPT_TABLE_49_56_REG_ADDR = 0x16
+	INTERRUPT_TABLE_57_64_REG_ADDR = 0x17
+
+	TEMPERATURE_REG_ADDR_L = 0x80
+	TEMPERATURE_REG_ADDR_H = 0x81
+
+	CLEAR_ALL_STATUS       = 0x0E
+	CLEAR_INTERRUPT_STATUS = 0x02
+
+	INIT_RESET_VALUE = 0x3F
+	FLAG_RESET_VALUE = 0x30
+
+	PIXEL_TEMP_CONVERSION = .25
+	THERMISTOR_CONVERSION = .0625
+)
+
+type Cmd byte
+
+func (c Cmd) toBytes() []byte {
+	return []byte{byte(c)}
+}

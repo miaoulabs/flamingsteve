@@ -5,12 +5,17 @@ import (
 	"flamingsteve/pkg/muthur"
 	"fmt"
 	"github.com/nats-io/nats.go"
+	"sync"
+	"time"
 )
 
 type Scanner struct {
 	subOn  *nats.Subscription
 	subOff *nats.Subscription
 	log    logger.Logger
+	tick   *time.Ticker
+
+	mutex sync.Mutex
 }
 
 type OnHandler func(entry Entry)
@@ -39,6 +44,9 @@ func NewScanner(etype EntryType, on OnHandler, off OffHandler) *Scanner {
 }
 
 func (s *Scanner) Close() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	s.log.Infof("closing scanner")
 	if s.subOff != nil {
 		s.subOff.Unsubscribe()
@@ -46,6 +54,31 @@ func (s *Scanner) Close() {
 
 	if s.subOn != nil {
 		s.subOn.Unsubscribe()
+	}
+}
+
+func (s *Scanner) StartScan(interval time.Duration) {
+	go func() {
+		s.log.Infof("scan routine every %v ms", interval.Milliseconds())
+		defer s.log.Infof("discovery scan stopped")
+
+		s.mutex.Lock()
+		s.tick = time.NewTicker(interval)
+		s.mutex.Unlock()
+
+		for range s.tick.C {
+			s.Scan()
+		}
+
+		s.mutex.Lock()
+		s.tick = nil
+		s.mutex.Unlock()
+	}()
+}
+
+func (s *Scanner) StopScan() {
+	if s.tick != nil {
+		s.tick.Stop()
 	}
 }
 

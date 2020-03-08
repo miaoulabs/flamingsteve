@@ -1,0 +1,104 @@
+syntax = "proto3";
+package fpixels;
+
+import "github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api/annotations.proto";
+import "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "Flame Pixels Controller"
+    version: "0.1.0"
+  };
+  host:"localhost:8080";
+  schemes:HTTP;
+};
+
+service FlamePixels {
+
+  rpc ListSensors(EmptyRequest) returns (ListSensorsResponse) {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      summary: "ListSensors"
+    };
+    option (google.api.http) = {
+      get: "/v1/sensors"
+    };
+  }
+
+  rpc GetSensorRawData(SensorRawDataRequest) returns (SensorRawDataResponse) {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      summary: "SensorRawData"
+    };
+    option (google.api.http) = {
+      get: "/v1/sensor/{id}/raw"
+    };
+  }
+
+  rpc ListDisplays(EmptyRequest) returns (ListDisplaysResponse) {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      summary: "ListDisplays"
+    };
+    option (google.api.http) = {
+      get: "/v1/displays"
+    };
+  }
+
+  rpc Draw(DrawRequest) returns (DrawRequest) {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      summary: "Draw"
+    };
+    option (google.api.http) = {
+      put: "/v1/draw/{id}"
+      body: "*"
+    };
+
+  }
+}
+
+/*
+  RESQUESTS / RESPONSES
+*/
+message EmptyRequest {}
+message EmptyReply {}
+
+message ListSensorsResponse {
+  repeated Device sensors = 1;
+}
+
+message SensorRawDataRequest {
+  string id = 1;
+}
+
+message SensorRawDataResponse {
+  string payload = 1;
+}
+
+message ListDisplaysResponse {
+  repeated Display displays = 1;
+}
+
+message DrawRequest {
+  string id = 1;
+}
+
+/*
+  DATA MODELS
+*/
+message Device {
+  string id = 1;
+  string name = 2;
+  string model = 3;
+  string hostname = 4;
+
+  enum Type {
+    Unknown = 0;
+    Display = 1;
+    Sensor = 2;
+    Presence = 3;
+  }
+}
+
+message Display {
+  Device device = 1;
+  uint32 width = 2;
+  uint32 height = 3;
+}

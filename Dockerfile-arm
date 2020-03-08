@@ -1,0 +1,10 @@
+FROM alpine:3
+
+RUN apk add --no-cache ca-certificates
+
+COPY dispmatrix.arm dispmatrix
+COPY muthur.arm muthur
+COPY sensor.arm sensor
+
+ENTRYPOINT ["ls"]
+CMD ["-lh"]

@@ -53,7 +53,7 @@ func (n *NotifierImpl) Notify() {
 		select {
 		case c <- true:
 		default:
-			println("skipping notification")
+			//println("skipping notification")
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"flamingsteve/pkg/notification"
 	"go.uber.org/atomic"
 	"gonum.org/v1/gonum/stat"
+	"sync"
 )
 
 type Mean struct {
@@ -14,6 +15,7 @@ type Mean struct {
 
 	sampleCount *atomic.Int32
 	ir          [FieldCount][]float64
+	mutex       sync.RWMutex
 }
 
 func NewMean(dev Device, samplesCount int) (*Mean, error) {
@@ -58,6 +60,7 @@ func (m *Mean) run() {
 		irs := state.Irs()
 
 		for i := range m.ir {
+			m.mutex.Lock()
 			m.ir[i] = append(m.ir[i], float64(irs[i]))
 
 			// drop the first item
@@ -65,6 +68,7 @@ func (m *Mean) run() {
 			if len(m.ir[i]) > max {
 				m.ir[i] = m.ir[i][len(m.ir[i])-max:]
 			}
+			m.mutex.Unlock()
 		}
 
 		m.Notify()
@@ -85,6 +89,8 @@ func (m *Mean) CompagnyCode() (uint8, error) {
 }
 
 func (m *Mean) IR(idx int) (float32, error) {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 	return float32(stat.Mean(m.ir[idx], nil)), nil
 }
 

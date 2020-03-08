@@ -112,9 +112,9 @@ func onNewSensor(log *logger.SugaredLogger, u *gui, wnd nucular.MasterWindow) fu
 			log.LogIfErr(err)
 
 			sensors.Set(entry.Id, Sensor{
-				Ident:          entry,
-				Device:         dev,
-				LocalDetector:  detector,
+				Ident:         entry,
+				Device:        dev,
+				LocalDetector: detector,
 			})
 
 			if u.selectedSensorIndex == 0 {

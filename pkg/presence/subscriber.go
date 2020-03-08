@@ -12,7 +12,7 @@ import (
 
 type Subscriber struct {
 	notification.NotifierImpl
-	sub   *nats.Subscription
+	sub     *nats.Subscription
 	present *atomic.Bool
 	sync.RWMutex
 
@@ -21,7 +21,7 @@ type Subscriber struct {
 
 func NewSubscriber(entry discovery.Entry) (*Subscriber, error) {
 	s := &Subscriber{
-		entry: entry,
+		entry:   entry,
 		present: atomic.NewBool(false),
 	}
 

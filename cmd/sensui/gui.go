@@ -16,14 +16,14 @@ import (
 )
 
 type gui struct {
-	ir        [ak9753.FieldCount][]float64
-	irTime    [ak9753.FieldCount][]time.Time
-	log       *logger.SugaredLogger
-	changed   chan bool
-	wnd       nucular.MasterWindow
+	ir      [ak9753.FieldCount][]float64
+	irTime  [ak9753.FieldCount][]time.Time
+	log     *logger.SugaredLogger
+	changed chan bool
+	wnd     nucular.MasterWindow
 
 	selectedSensorIndex int
-	currentSensor *Sensor
+	currentSensor       *Sensor
 
 	options presence.Options
 
@@ -31,9 +31,9 @@ type gui struct {
 }
 
 const (
-	LeftCenter = "LC"
+	LeftCenter  = "LC"
 	WidgetFlags = nucular.WindowNoScrollbar | nucular.WindowNoHScrollbar
-	Height = 35
+	Height      = 35
 )
 
 func (u *gui) updateSensorData() {
@@ -133,11 +133,11 @@ func (ui *gui) renderProps(w *nucular.Window) {
 		return
 	}
 
-	padding := Height/2
+	padding := Height / 2
 
 	w.Spacing(1)
-	w.Row(Height * 4 + padding).Dynamic(1)
-	if p := w.GroupBegin("Properties", WidgetFlags | nucular.WindowBorder); p != nil {
+	w.Row(Height*4 + padding).Dynamic(1)
+	if p := w.GroupBegin("Properties", WidgetFlags|nucular.WindowBorder); p != nil {
 		ui.renderAk9753SensorData(p)
 		p.GroupEnd()
 	}
@@ -145,8 +145,8 @@ func (ui *gui) renderProps(w *nucular.Window) {
 	w.Row(padding).Dynamic(1)
 	w.Spacing(1)
 
-	w.Row(Height * 6 + padding).Dynamic(1)
-	if p := w.GroupBegin("Properties", WidgetFlags| nucular.WindowBorder); p != nil {
+	w.Row(Height*6 + padding).Dynamic(1)
+	if p := w.GroupBegin("Properties", WidgetFlags|nucular.WindowBorder); p != nil {
 		ui.renderAk9753Detector(p)
 		p.GroupEnd()
 	}
@@ -210,19 +210,19 @@ func (ui *gui) drawSensor(w *nucular.Window, idx int) {
 			YAxis: chart.YAxis{
 				Ascending: true,
 				Style: chart.Style{
-					Show: true,
+					Show:        true,
 					StrokeColor: chart.ColorTransparent,
-					FontColor: chart.ColorTransparent,
+					FontColor:   chart.ColorTransparent,
 				},
 				GridMajorStyle: chart.Style{
 					Show:            true,
 					StrokeColor:     chart.ColorWhite,
 					StrokeDashArray: []float64{5.0, 5.0},
-					StrokeWidth: 1,
+					StrokeWidth:     1,
 				},
 				GridLines: []chart.GridLine{
 					{
-						Value:   float64(ui.options.Threshold),
+						Value: float64(ui.options.Threshold),
 					},
 				},
 				Range: &chart.ContinuousRange{

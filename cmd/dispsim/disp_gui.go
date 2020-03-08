@@ -20,21 +20,20 @@ type Gui struct {
 	mutex      sync.RWMutex
 }
 
-func NewGui(w,h int) *Gui {
+func NewGui() *Gui {
 	g := &Gui{
-		pixW: w,
-		pixH: h,
-		pixels: make([]bool, w*h),
+		pixW:   int(args.width),
+		pixH:   int(args.height),
+		pixels: make([]bool, args.width*args.height),
 	}
-	g.listener = display.NewListener("dispsim", "virtual", g.updateDrawing)
-
+	g.listener = display.NewListener(args.name, args.model, args.width, args.height, g.updateDrawing)
 	return g
 }
 
 func (g *Gui) WindowSize() image.Point {
 	return image.Point{
-		X: g.pixW * (PixelEdgeDimension + PixelSpacing),
-		Y: g.pixH * (PixelEdgeDimension + PixelSpacing) + PixelSpacing/2,
+		X: int(g.pixW * (PixelEdgeDimension + PixelSpacing)),
+		Y: int(g.pixH*(PixelEdgeDimension+PixelSpacing) + PixelSpacing/2),
 	}
 }
 
@@ -84,7 +83,7 @@ func (g *Gui) render(mw *nucular.Window) {
 	defer g.mutex.RUnlock()
 
 	for idx, pix := range g.pixels {
-		img := image.NewRGBA(image.Rect(0,0, PixelEdgeDimension + PixelSpacing/2, PixelEdgeDimension + PixelSpacing/2))
+		img := image.NewRGBA(image.Rect(0, 0, PixelEdgeDimension+PixelSpacing/2, PixelEdgeDimension+PixelSpacing/2))
 		ctx := gg.NewContextForRGBA(img)
 		ctx.SetColor(mw.WindowStyle().Background)
 		ctx.Clear()

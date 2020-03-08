@@ -36,8 +36,8 @@ func New(device ak9753.Device, options *Options) (*Detector, error) {
 	d := &Detector{
 		dev:     device,
 		changed: make(chan bool),
-		mean: mean,
-		since: [ak9753.FieldCount]*time.Time{},
+		mean:    mean,
+		since:   [ak9753.FieldCount]*time.Time{},
 	}
 
 	d.ApplyOptions(*options)

@@ -3,9 +3,10 @@ package ak9753
 import (
 	"encoding/binary"
 	"fmt"
-	"periph.io/x/periph/conn/i2c"
 	"sync"
 	"time"
+
+	"periph.io/x/periph/conn/i2c"
 )
 
 type Physical struct {

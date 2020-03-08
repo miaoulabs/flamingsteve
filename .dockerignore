@@ -1,0 +1,7 @@
+.git
+.test
+.idea
+.vscode
+*.md
+*.yml
+Dockerfile

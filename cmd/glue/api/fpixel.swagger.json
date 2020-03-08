@@ -1,0 +1,188 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Flame Pixels Controller",
+    "version": "0.1.0"
+  },
+  "host": "localhost:8080",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/displays": {
+      "get": {
+        "summary": "ListDisplays",
+        "operationId": "ListDisplays",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/fpixelsListDisplaysResponse"
+            }
+          }
+        },
+        "tags": [
+          "FlamePixels"
+        ]
+      }
+    },
+    "/v1/draw/{id}": {
+      "put": {
+        "summary": "DisplayInfo",
+        "operationId": "Draw",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/fpixelsEmptyReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/fpixelsDrawRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FlamePixels"
+        ]
+      }
+    },
+    "/v1/sensor/{id}/raw": {
+      "get": {
+        "summary": "SensorRawData",
+        "operationId": "GetSensorRawData",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/fpixelsSensorRawDataResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FlamePixels"
+        ]
+      }
+    },
+    "/v1/sensors": {
+      "get": {
+        "summary": "ListSensors",
+        "operationId": "ListSensors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/fpixelsListSensorsResponse"
+            }
+          }
+        },
+        "tags": [
+          "FlamePixels"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "fpixelsDevice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        }
+      },
+      "title": "DATA MODELS"
+    },
+    "fpixelsDisplay": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "$ref": "#/definitions/fpixelsDevice"
+        },
+        "width": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "height": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "fpixelsDrawRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "fpixelsEmptyReply": {
+      "type": "object"
+    },
+    "fpixelsListDisplaysResponse": {
+      "type": "object",
+      "properties": {
+        "displays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/fpixelsDisplay"
+          }
+        }
+      }
+    },
+    "fpixelsListSensorsResponse": {
+      "type": "object",
+      "properties": {
+        "sensors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/fpixelsDevice"
+          }
+        }
+      }
+    },
+    "fpixelsSensorRawDataResponse": {
+      "type": "object",
+      "properties": {
+        "payload": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

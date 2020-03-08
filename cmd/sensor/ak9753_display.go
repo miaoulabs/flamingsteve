@@ -1,26 +1,30 @@
 package main
 
 import (
+	"flamingsteve/pkg/ak9753"
+	ak9753presence "flamingsteve/pkg/ak9753/presence"
 	"fmt"
 	"time"
 
 	tm "github.com/buger/goterm"
 )
 
-type display struct {
-	closed chan bool
+type ak9753_display struct {
+	closed   chan bool
+	detector *ak9753presence.Detector
+	device   ak9753.Device
 }
 
 func center(text string, width int) string {
 	return fmt.Sprintf("%[1]*s", -width, fmt.Sprintf("%[1]*s", (width+len(text))/2, text))
 }
 
-func (d *display) close() {
+func (d *ak9753_display) close() {
 	d.closed <- true
 	close(d.closed)
 }
 
-func (d *display) textDisplay() {
+func (d *ak9753_display) textDisplay() {
 	width := 8
 	toXO := func(v bool) string {
 		if v {
@@ -55,19 +59,19 @@ func (d *display) textDisplay() {
 			center("IR4", width),
 		)
 
-		if detector != nil {
+		if d.detector != nil {
 			tm.Printf("presence    | %s | %s | %s | %s |\n",
-				toXO(detector.PresentInField1()),
-				toXO(detector.PresentInField2()),
-				toXO(detector.PresentInField3()),
-				toXO(detector.PresentInField4()),
+				toXO(d.detector.PresentInField1()),
+				toXO(d.detector.PresentInField2()),
+				toXO(d.detector.PresentInField3()),
+				toXO(d.detector.PresentInField4()),
 			)
 		}
 
-		ir1, _ := device.IR1()
-		ir2, _ := device.IR2()
-		ir3, _ := device.IR3()
-		ir4, _ := device.IR4()
+		ir1, _ := d.device.IR1()
+		ir2, _ := d.device.IR2()
+		ir3, _ := d.device.IR3()
+		ir4, _ := d.device.IR4()
 		tm.Printf("sensor      | %8.3f | %8.3f | %8.3f | %8.3f |\n",
 			ir1,
 			ir2,
@@ -75,7 +79,7 @@ func (d *display) textDisplay() {
 			ir4,
 		)
 
-		tmp, _ := device.Temperature()
+		tmp, _ := d.device.Temperature()
 		tm.Printf("temperature | %8.2f C\n", tmp)
 		tm.Printf("elapsed     | %v\n", time.Now().Sub(start))
 		tm.Flush()
