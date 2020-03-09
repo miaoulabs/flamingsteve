@@ -3,8 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"github.com/labstack/gommon/log"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +11,7 @@ import (
 
 	"flamingsteve/pkg/logger"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -111,7 +110,7 @@ func (s *Server) serve() {
 		Handler: h2c.NewHandler(http.HandlerFunc(s.grpcHandlerFunc), &http2.Server{}),
 	}
 
-	log.Info("starting grpc on port ", port)
+	s.log.Infof("starting grpc on port %v", port)
 	err = srv.Serve(conn)
 	if err != nil {
 		s.log.Panicf("cannot serve grpc: %v", err)

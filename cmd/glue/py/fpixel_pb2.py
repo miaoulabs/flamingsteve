@@ -11,8 +11,8 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from github.com.grpc_ecosystem.grpc_gateway.third_party.googleapis.google.api import annotations_pb2 as github_dot_com_dot_grpc__ecosystem_dot_grpc__gateway_dot_third__party_dot_googleapis_dot_google_dot_api_dot_annotations__pb2
-from github.com.grpc_ecosystem.grpc_gateway.protoc_gen_swagger.options import annotations_pb2 as github_dot_com_dot_grpc__ecosystem_dot_grpc__gateway_dot_protoc__gen__swagger_dot_options_dot_annotations__pb2
+from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
+from protoc_gen_swagger.options import annotations_pb2 as protoc__gen__swagger_dot_options_dot_annotations__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -20,9 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='fpixels',
   syntax='proto3',
   serialized_options=b'\222A5\022 \n\027Flame Pixels Controller2\0050.1.0\032\016localhost:8080*\001\001',
-  serialized_pb=b'\n\x0c\x66pixel.proto\x12\x07\x66pixels\x1aZgithub.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api/annotations.proto\x1aSgithub.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options/annotations.proto\"\x0e\n\x0c\x45mptyRequest\"\x0c\n\nEmptyReply\"7\n\x13ListSensorsResponse\x12 \n\x07sensors\x18\x01 \x03(\x0b\x32\x0f.fpixels.Device\"\"\n\x14SensorRawDataRequest\x12\n\n\x02id\x18\x01 \x01(\t\"(\n\x15SensorRawDataResponse\x12\x0f\n\x07payload\x18\x01 \x01(\t\":\n\x14ListDisplaysResponse\x12\"\n\x08\x64isplays\x18\x01 \x03(\x0b\x32\x10.fpixels.Display\"\x19\n\x0b\x44rawRequest\x12\n\n\x02id\x18\x01 \x01(\t\"\x7f\n\x06\x44\x65vice\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05model\x18\x03 \x01(\t\x12\x10\n\x08hostname\x18\x04 \x01(\t\":\n\x04Type\x12\x0b\n\x07Unknown\x10\x00\x12\x0b\n\x07\x44isplay\x10\x01\x12\n\n\x06Sensor\x10\x02\x12\x0c\n\x08Presence\x10\x03\"I\n\x07\x44isplay\x12\x1f\n\x06\x64\x65vice\x18\x01 \x01(\x0b\x32\x0f.fpixels.Device\x12\r\n\x05width\x18\x02 \x01(\r\x12\x0e\n\x06height\x18\x03 \x01(\r2\xc3\x03\n\x0b\x46lamePixels\x12g\n\x0bListSensors\x12\x15.fpixels.EmptyRequest\x1a\x1c.fpixels.ListSensorsResponse\"#\x92\x41\r\x12\x0bListSensors\x82\xd3\xe4\x93\x02\r\x12\x0b/v1/sensors\x12\x80\x01\n\x10GetSensorRawData\x12\x1d.fpixels.SensorRawDataRequest\x1a\x1e.fpixels.SensorRawDataResponse\"-\x92\x41\x0f\x12\rSensorRawData\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/sensor/{id}/raw\x12k\n\x0cListDisplays\x12\x15.fpixels.EmptyRequest\x1a\x1d.fpixels.ListDisplaysResponse\"%\x92\x41\x0e\x12\x0cListDisplays\x82\xd3\xe4\x93\x02\x0e\x12\x0c/v1/displays\x12[\n\x04\x44raw\x12\x14.fpixels.DrawRequest\x1a\x13.fpixels.EmptyReply\"(\x92\x41\r\x12\x0b\x44isplayInfo\x82\xd3\xe4\x93\x02\x12\x1a\r/v1/draw/{id}:\x01*B8\x92\x41\x35\x12 \n\x17\x46lame Pixels Controller2\x05\x30.1.0\x1a\x0elocalhost:8080*\x01\x01\x62\x06proto3'
+  serialized_pb=b'\n\x0c\x66pixel.proto\x12\x07\x66pixels\x1a\x1cgoogle/api/annotations.proto\x1a,protoc-gen-swagger/options/annotations.proto\"\x0e\n\x0c\x45mptyRequest\"\x0c\n\nEmptyReply\"7\n\x13ListSensorsResponse\x12 \n\x07sensors\x18\x01 \x03(\x0b\x32\x0f.fpixels.Device\"\"\n\x14SensorRawDataRequest\x12\n\n\x02id\x18\x01 \x01(\t\"(\n\x15SensorRawDataResponse\x12\x0f\n\x07payload\x18\x01 \x01(\t\":\n\x14ListDisplaysResponse\x12\"\n\x08\x64isplays\x18\x01 \x03(\x0b\x32\x10.fpixels.Display\"\x19\n\x0b\x44rawRequest\x12\n\n\x02id\x18\x01 \x01(\t\"\x7f\n\x06\x44\x65vice\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05model\x18\x03 \x01(\t\x12\x10\n\x08hostname\x18\x04 \x01(\t\":\n\x04Type\x12\x0b\n\x07Unknown\x10\x00\x12\x0b\n\x07\x44isplay\x10\x01\x12\n\n\x06Sensor\x10\x02\x12\x0c\n\x08Presence\x10\x03\"I\n\x07\x44isplay\x12\x1f\n\x06\x64\x65vice\x18\x01 \x01(\x0b\x32\x0f.fpixels.Device\x12\r\n\x05width\x18\x02 \x01(\r\x12\x0e\n\x06height\x18\x03 \x01(\r2\xbd\x03\n\x0b\x46lamePixels\x12g\n\x0bListSensors\x12\x15.fpixels.EmptyRequest\x1a\x1c.fpixels.ListSensorsResponse\"#\x92\x41\r\x12\x0bListSensors\x82\xd3\xe4\x93\x02\r\x12\x0b/v1/sensors\x12\x80\x01\n\x10GetSensorRawData\x12\x1d.fpixels.SensorRawDataRequest\x1a\x1e.fpixels.SensorRawDataResponse\"-\x92\x41\x0f\x12\rSensorRawData\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/sensor/{id}/raw\x12k\n\x0cListDisplays\x12\x15.fpixels.EmptyRequest\x1a\x1d.fpixels.ListDisplaysResponse\"%\x92\x41\x0e\x12\x0cListDisplays\x82\xd3\xe4\x93\x02\x0e\x12\x0c/v1/displays\x12U\n\x04\x44raw\x12\x14.fpixels.DrawRequest\x1a\x14.fpixels.DrawRequest\"!\x92\x41\x06\x12\x04\x44raw\x82\xd3\xe4\x93\x02\x12\x1a\r/v1/draw/{id}:\x01*B8\x92\x41\x35\x12 \n\x17\x46lame Pixels Controller2\x05\x30.1.0\x1a\x0elocalhost:8080*\x01\x01\x62\x06proto3'
   ,
-  dependencies=[github_dot_com_dot_grpc__ecosystem_dot_grpc__gateway_dot_third__party_dot_googleapis_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,github_dot_com_dot_grpc__ecosystem_dot_grpc__gateway_dot_protoc__gen__swagger_dot_options_dot_annotations__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_annotations__pb2.DESCRIPTOR,protoc__gen__swagger_dot_options_dot_annotations__pb2.DESCRIPTOR,])
 
 
 
@@ -51,8 +51,8 @@ _DEVICE_TYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=523,
-  serialized_end=581,
+  serialized_start=422,
+  serialized_end=480,
 )
 _sym_db.RegisterEnumDescriptor(_DEVICE_TYPE)
 
@@ -76,8 +76,8 @@ _EMPTYREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=202,
-  serialized_end=216,
+  serialized_start=101,
+  serialized_end=115,
 )
 
 
@@ -100,8 +100,8 @@ _EMPTYREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=218,
-  serialized_end=230,
+  serialized_start=117,
+  serialized_end=129,
 )
 
 
@@ -131,8 +131,8 @@ _LISTSENSORSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=232,
-  serialized_end=287,
+  serialized_start=131,
+  serialized_end=186,
 )
 
 
@@ -162,8 +162,8 @@ _SENSORRAWDATAREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=289,
-  serialized_end=323,
+  serialized_start=188,
+  serialized_end=222,
 )
 
 
@@ -193,8 +193,8 @@ _SENSORRAWDATARESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=325,
-  serialized_end=365,
+  serialized_start=224,
+  serialized_end=264,
 )
 
 
@@ -224,8 +224,8 @@ _LISTDISPLAYSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=367,
-  serialized_end=425,
+  serialized_start=266,
+  serialized_end=324,
 )
 
 
@@ -255,8 +255,8 @@ _DRAWREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=427,
-  serialized_end=452,
+  serialized_start=326,
+  serialized_end=351,
 )
 
 
@@ -308,8 +308,8 @@ _DEVICE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=454,
-  serialized_end=581,
+  serialized_start=353,
+  serialized_end=480,
 )
 
 
@@ -353,8 +353,8 @@ _DISPLAY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=583,
-  serialized_end=656,
+  serialized_start=482,
+  serialized_end=555,
 )
 
 _LISTSENSORSRESPONSE.fields_by_name['sensors'].message_type = _DEVICE
@@ -444,8 +444,8 @@ _FLAMEPIXELS = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=659,
-  serialized_end=1110,
+  serialized_start=558,
+  serialized_end=1003,
   methods=[
   _descriptor.MethodDescriptor(
     name='ListSensors',
@@ -480,8 +480,8 @@ _FLAMEPIXELS = _descriptor.ServiceDescriptor(
     index=3,
     containing_service=None,
     input_type=_DRAWREQUEST,
-    output_type=_EMPTYREPLY,
-    serialized_options=b'\222A\r\022\013DisplayInfo\202\323\344\223\002\022\032\r/v1/draw/{id}:\001*',
+    output_type=_DRAWREQUEST,
+    serialized_options=b'\222A\006\022\004Draw\202\323\344\223\002\022\032\r/v1/draw/{id}:\001*',
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_FLAMEPIXELS)

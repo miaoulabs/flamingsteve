@@ -1,8 +1,8 @@
 syntax = "proto3";
 package fpixels;
 
-import "github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api/annotations.proto";
-import "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options/annotations.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {

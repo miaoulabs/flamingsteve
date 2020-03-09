@@ -34,13 +34,13 @@
     },
     "/v1/draw/{id}": {
       "put": {
-        "summary": "DisplayInfo",
+        "summary": "Draw",
         "operationId": "Draw",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/fpixelsEmptyReply"
+              "$ref": "#/definitions/fpixelsDrawRequest"
             }
           }
         },
@@ -150,9 +150,6 @@
           "type": "string"
         }
       }
-    },
-    "fpixelsEmptyReply": {
-      "type": "object"
     },
     "fpixelsListDisplaysResponse": {
       "type": "object",

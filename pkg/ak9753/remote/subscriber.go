@@ -100,3 +100,7 @@ func (s *Subscriber) All() ak9753.State {
 	defer s.mutex.RUnlock()
 	return s.state
 }
+
+func (s *Subscriber) Raw() interface{} {
+	return s.All()
+}

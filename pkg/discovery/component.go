@@ -119,7 +119,7 @@ func (c *Component) whoAmI(*nats.Msg) {
 }
 
 func (c *Component) Id() string {
-	return c.cfg.Name // TODO: generate a unique id based on mac addr
+	return fmt.Sprintf("%s.%s", c.cfg.Model, c.cfg.Name)
 }
 
 func (c *Component) DataTopic() string {

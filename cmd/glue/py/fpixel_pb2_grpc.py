@@ -32,7 +32,7 @@ class FlamePixelsStub(object):
     self.Draw = channel.unary_unary(
         '/fpixels.FlamePixels/Draw',
         request_serializer=fpixel__pb2.DrawRequest.SerializeToString,
-        response_deserializer=fpixel__pb2.EmptyReply.FromString,
+        response_deserializer=fpixel__pb2.DrawRequest.FromString,
         )
 
 
@@ -89,7 +89,7 @@ def add_FlamePixelsServicer_to_server(servicer, server):
       'Draw': grpc.unary_unary_rpc_method_handler(
           servicer.Draw,
           request_deserializer=fpixel__pb2.DrawRequest.FromString,
-          response_serializer=fpixel__pb2.EmptyReply.SerializeToString,
+          response_serializer=fpixel__pb2.DrawRequest.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

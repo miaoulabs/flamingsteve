@@ -75,3 +75,7 @@ func (s *Subscriber) update(state *amg8833.State) {
 		s.Notify()
 	}
 }
+
+func (s *Subscriber) Raw() interface{} {
+	return s.State()
+}

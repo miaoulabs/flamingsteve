@@ -7,8 +7,6 @@ import (
 	"flamingsteve/pkg/display"
 	"flamingsteve/pkg/logger"
 	"flamingsteve/pkg/muthur"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"sync"
 	"time"
 
@@ -16,10 +14,12 @@ import (
 )
 
 type Service struct {
+	fpixels.FlamePixelsServer
+
 	log logger.Logger
 
 	displays map[string]*display.Remote
-	//sensors  map[string]*sen
+	sensors  map[string]Sensor
 
 	mutex          sync.RWMutex
 	displayScanner *discovery.Scanner
@@ -32,8 +32,9 @@ type Display struct {
 
 func NewService() fpixels.FlamePixelsServer {
 	s := &Service{
-		log: cmd.NewLogger("fpixels"),
+		log:      cmd.NewLogger("fpixels"),
 		displays: map[string]*display.Remote{},
+		sensors: map[string]Sensor{},
 	}
 
 	muthur.Connect("glue")
@@ -43,6 +44,8 @@ func NewService() fpixels.FlamePixelsServer {
 	s.displayScanner.StartScan(time.Second * 30) // scan every 30 sec
 
 	s.sensorScanner = discovery.NewScanner(discovery.Sensor, s.onNewSensor, s.onRmSensor)
+	s.sensorScanner.Scan()
+	s.sensorScanner.StartScan(time.Second * 30)
 
 	return s
 }
@@ -52,7 +55,16 @@ func (s *Service) Close() {
 }
 
 func (s *Service) ListSensors(context.Context, *fpixels.EmptyRequest) (*fpixels.ListSensorsResponse, error) {
-	panic("implement me")
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	resp := &fpixels.ListSensorsResponse{}
+
+	for _, sen := range s.sensors {
+		resp.Sensors = append(resp.Sensors, toDevice(sen.Ident))
+	}
+
+	return resp, nil
 }
 
 func (s *Service) GetSensorRawData(context.Context, *fpixels.SensorRawDataRequest) (*fpixels.SensorRawDataResponse, error) {
@@ -70,12 +82,7 @@ func (s *Service) ListDisplays(ctx context.Context, req *fpixels.EmptyRequest) (
 		e := v.Ident()
 
 		resp.Displays = append(resp.Displays, &fpixels.Display{
-			Device: &fpixels.Device{
-				Id:       e.Id,
-				Name:     e.Name,
-				Model:    e.Model,
-				Hostname: e.Hostname,
-			},
+			Device: toDevice(e),
 			Width:  uint32(w),
 			Height: uint32(h),
 		})
@@ -84,16 +91,21 @@ func (s *Service) ListDisplays(ctx context.Context, req *fpixels.EmptyRequest) (
 	return resp, nil
 }
 
-func (s *Service) Draw(ctx context.Context, req *fpixels.DrawRequest) (*fpixels.EmptyReply, error) {
-	disp := s.getDisplay(req.Id)
-	if disp == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "display %v doesn't exists", req.Id)
-	}
-
-	//disp.Draw()
-
-	return &fpixels.EmptyReply{}, nil
+func (s *Service) Draw(context.Context, *fpixels.DrawRequest) (*fpixels.DrawRequest, error) {
+	panic("implement me")
 }
+
+//
+//func (s *Service) Draw(ctx context.Context, req *fpixels.DrawRequest) (*fpixels.EmptyReply, error) {
+//	disp := s.getDisplay(req.Id)
+//	if disp == nil {
+//		return nil, status.Errorf(codes.InvalidArgument, "display %v doesn't exists", req.Id)
+//	}
+//
+//	//disp.Draw()
+//
+//	return &fpixels.EmptyReply{}, nil
+//}
 
 func (s *Service) getDisplay(id string) *display.Remote {
 	s.mutex.RLock()
@@ -124,10 +136,23 @@ func (s *Service) onNewSensor(entry discovery.Entry) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	sen := NewSensor(entry)
+	if sen != nil {
+		s.sensors[entry.Id] = *sen
+	}
 }
 
 func (s *Service) onRmSensor(entry discovery.Entry) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	delete(s.sensors, entry.Id)
+}
 
+func toDevice(entry discovery.Entry) *fpixels.Device {
+	return &fpixels.Device{
+		Id:       entry.Id,
+		Name:     entry.Name,
+		Model:    entry.Model,
+		Hostname: entry.Hostname,
+	}
 }
