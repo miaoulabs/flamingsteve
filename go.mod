@@ -17,8 +17,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.14.1
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/json-iterator/go v1.1.9
-	github.com/labstack/gommon v0.3.0
-	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/mwitkow/go-proto-validators v0.3.0
 	github.com/nats-io/nats-server/v2 v2.1.4
@@ -27,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	go.uber.org/atomic v1.5.1
-	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
+	golang.org/x/net v0.7.0
 	gonum.org/v1/gonum v0.6.2
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 	google.golang.org/grpc v1.27.1
